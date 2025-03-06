@@ -27,3 +27,5 @@ go.work.sum
 .nix/
 result
 result-*
+
+readdeck-highlight-exporter
