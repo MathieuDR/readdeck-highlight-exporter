@@ -55,7 +55,7 @@
         meta = {
           description = "A readdeck highlight exporter";
           homepage = "https://github.com/MathieuDR/readdeck-highlight-exporter";
-          license = lib.licenses.mpl20;
+          license = lib.licenses.mit;
           maintainers = ["MathieuDR"];
         };
       };
@@ -74,6 +74,14 @@
         shellHook = ''
           echo "Welcome to the readdeck highlight exporter development environment!"
           echo "Go version: $(go version)"
+
+          mkdir -p $PWD/.nix/go/bin
+          export PATH=$PWD/.nix/go/bin:$PATH
+          export GOBIN=$PWD/.nix/go/bin
+
+          echo "Project binaries will be installed to: $GOBIN"
+          echo ""
+
           echo "Available commands:"
           echo "  go build              - Build the project"
           echo "  go test               - Run tests"
