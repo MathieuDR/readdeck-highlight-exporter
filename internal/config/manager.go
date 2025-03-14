@@ -1,10 +1,10 @@
 package config
 
 import (
-  "path/filepath"
+	"path/filepath"
 )
 
 func ConfigPath(dir ConfigDir) string {
-  configHome := dir.ConfigHome()
-  return filepath.Join(configHome, "readdeck-exporter", "config.yaml")
+	configHome := dir.ConfigHome()
+	return filepath.Join(configHome, "readdeck-exporter")
 }

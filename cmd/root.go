@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mathieudr/readdeck-highlight-exporter/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -55,13 +56,11 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
+		configDir := config.ConfigPath(config.XDGDir{})
 
-		// Search config in home directory with name ".readdeck-highlight-exporter" (without extension).
-		viper.AddConfigPath(home)
+		viper.AddConfigPath(configDir)
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".readdeck-highlight-exporter")
+		viper.SetConfigName("settings")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
