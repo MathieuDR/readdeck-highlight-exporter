@@ -31,7 +31,7 @@ func NewHttpClient(client http.Client, baseUrl, authToken string) *HttpClient {
 	}
 }
 
-const PageSize = 100
+const PageSize = 2
 
 func (c HttpClient) GetHighlights(ctx context.Context) ([]Highlight, error) {
 	var highlights []Highlight
@@ -39,7 +39,7 @@ func (c HttpClient) GetHighlights(ctx context.Context) ([]Highlight, error) {
 	for i := 0; i < totalPages; i++ {
 		log.Printf("Requesting page %d, offset: %d", (i + 1), i*PageSize)
 
-		call, err := c.doCall(ctx, PageSize, i*PageSize)
+		call, err := c.doHighlightCall(ctx, PageSize, i*PageSize)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error while fetching highlights: %w", err)
@@ -52,7 +52,7 @@ func (c HttpClient) GetHighlights(ctx context.Context) ([]Highlight, error) {
 	return highlights, nil
 }
 
-func (c HttpClient) doCall(ctx context.Context, limit int, offset int) (highlightsCall, error) {
+func (c HttpClient) doHighlightCall(ctx context.Context, limit int, offset int) (highlightsCall, error) {
 	request, err := c.createHighlightsRequest(ctx, limit, offset)
 	if err != nil {
 		return highlightsCall{}, err
@@ -82,8 +82,7 @@ func (c HttpClient) createHighlightsRequest(ctx context.Context, limit, offset i
 	queries.Add("offset", strconv.Itoa(offset))
 	req.URL.RawQuery = queries.Encode()
 
-	req.Header.Add("accept", "application/json")
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.token))
+	c.addCommonHeaders(req)
 
 	return req, nil
 }
@@ -132,5 +131,58 @@ func extractPaginationInfo(resp *http.Response, limit, offset int) (int, int, er
 }
 
 func (c HttpClient) GetBookmark(ctx context.Context, bookmarkId string) (Bookmark, error) {
-	return Bookmark{}, nil
+	request, err := c.createBookmarkRequest(ctx, bookmarkId)
+
+	if err != nil {
+		return Bookmark{}, fmt.Errorf("Could not create request: %w", err)
+	}
+
+	resp, err := c.client.Do(request)
+
+	if err != nil {
+		return Bookmark{}, fmt.Errorf("HTTP Request failed: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return Bookmark{}, fmt.Errorf("Non success status code: %d", resp.StatusCode)
+	}
+
+	return parseBookmark(resp)
+}
+
+func (c HttpClient) createBookmarkRequest(ctx context.Context, id string) (*http.Request, error) {
+	endpoint := fmt.Sprintf("%s/api/bookmarks/%s", c.baseUrl, id)
+	req, err := http.NewRequestWithContext(ctx, "GET", endpoint, nil)
+
+	if err != nil {
+		return nil, fmt.Errorf("Could not create request: %w", err)
+	}
+
+	c.addCommonHeaders(req)
+
+	return req, nil
+}
+
+func (c HttpClient) addCommonHeaders(req *http.Request) *http.Request {
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.token))
+
+	return req
+}
+
+func parseBookmark(resp *http.Response) (Bookmark, error) {
+	defer resp.Body.Close()
+
+	var result Bookmark
+
+	jsonBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return Bookmark{}, fmt.Errorf("Failed to read bytes: %w", err)
+	}
+
+	if err := json.Unmarshal(jsonBytes, &result); err != nil {
+		return Bookmark{}, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+
+	return result, nil
 }

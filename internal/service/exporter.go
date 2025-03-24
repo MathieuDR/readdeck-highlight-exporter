@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/readdeck"
@@ -39,6 +40,21 @@ func (e *Exporter) Export(ctx context.Context) (map[string][]readdeck.Highlight,
 	// 7. Return the exported notes
 
 	return groupedHiglights, nil
+}
+
+func (e *Exporter) ResolveBookmarks(ctx context.Context, dict map[string][]readdeck.Highlight) (map[*readdeck.Bookmark][]readdeck.Highlight, error) {
+	res := make(map[*readdeck.Bookmark][]readdeck.Highlight)
+	for id, highlights := range dict {
+		b, err := e.readdeckClient.GetBookmark(ctx, id)
+
+		if err != nil {
+			return nil, fmt.Errorf("Could not retrieve bookmark with id %s: %w", id, err)
+		}
+
+		res[&b] = highlights
+	}
+
+	return res, nil
 }
 
 func (e *Exporter) GroupHighlightsByBookmark(highlights []readdeck.Highlight) map[string][]readdeck.Highlight {

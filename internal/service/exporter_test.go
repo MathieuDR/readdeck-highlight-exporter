@@ -9,10 +9,8 @@ import (
 )
 
 func TestGroupHighlightsByBookmark(t *testing.T) {
-	// Create a test exporter with nil dependencies (we don't need them for this test)
 	exporter := NewExporter(nil, nil)
 
-	// Create mock highlights data with known bookmark IDs
 	highlights := []readdeck.Highlight{
 		{
 			ID:         "h1",
@@ -46,16 +44,13 @@ func TestGroupHighlightsByBookmark(t *testing.T) {
 		},
 	}
 
-	// Call the function we're testing
 	grouped := exporter.GroupHighlightsByBookmark(highlights)
 
-	// Assertions
 	assert.Equal(t, 3, len(grouped), "Should have 3 bookmark groups")
 	assert.Equal(t, 2, len(grouped["book1"]), "book1 should have 2 highlights")
 	assert.Equal(t, 2, len(grouped["book2"]), "book2 should have 2 highlights")
 	assert.Equal(t, 1, len(grouped["book3"]), "book3 should have 1 highlight")
 
-	// Verify the highlights in each group are correct
 	assert.Equal(t, "h1", grouped["book1"][0].ID)
 	assert.Equal(t, "h2", grouped["book1"][1].ID)
 }

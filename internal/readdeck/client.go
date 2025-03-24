@@ -19,7 +19,7 @@ type Highlight struct {
 }
 
 type Bookmark struct {
-	Authors     string    `json:"authors"`
+	Authors     []string  `json:"authors"`
 	Created     time.Time `json:"created"`
 	Description string    `json:"description"`
 	Type        string    `json:"document_type"`
