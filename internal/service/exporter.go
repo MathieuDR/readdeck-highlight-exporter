@@ -37,7 +37,7 @@ func (e *Exporter) Export(ctx context.Context) ([]model.Note, error) {
 		return nil, err
 	}
 
-	return e.UpsertNotes(ctx, bookmarkHighlights)
+	return e.upsertNotes(ctx, bookmarkHighlights)
 }
 
 func (e *Exporter) resolveBookmarks(ctx context.Context, dict map[string][]readdeck.Highlight) ([]model.Note, error) {
@@ -69,7 +69,7 @@ func (e *Exporter) groupHighlightsByBookmark(highlights []readdeck.Highlight) ma
 	return res
 }
 
-func (e *Exporter) UpsertNotes(ctx context.Context, notes []model.Note) ([]model.Note, error) {
+func (e *Exporter) upsertNotes(ctx context.Context, notes []model.Note) ([]model.Note, error) {
 	res := make([]model.Note, 0, len(notes))
 
 	for _, note := range notes {
