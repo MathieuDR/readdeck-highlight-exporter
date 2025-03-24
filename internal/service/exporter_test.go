@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/readdeck"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -13,6 +14,15 @@ import (
 
 type MockReaddeckClient struct {
 	mock.Mock
+}
+
+type MockNoteRepository struct {
+	mock.Mock
+}
+
+func (m *MockNoteRepository) Upsert(ctx context.Context, note model.Note) (model.Note, error) {
+	args := m.Called(ctx, note)
+	return args.Get(0).(model.Note), args.Error(1)
 }
 
 func (m *MockReaddeckClient) GetHighlights(ctx context.Context) ([]readdeck.Highlight, error) {
@@ -23,6 +33,70 @@ func (m *MockReaddeckClient) GetHighlights(ctx context.Context) ([]readdeck.High
 func (m *MockReaddeckClient) GetBookmark(ctx context.Context, bookmarkId string) (readdeck.Bookmark, error) {
 	args := m.Called(ctx, bookmarkId)
 	return args.Get(0).(readdeck.Bookmark), args.Error(1)
+}
+
+func TestExport(t *testing.T) {
+	mockClient := new(MockReaddeckClient)
+	mockRepo := new(MockNoteRepository)
+	exporter := NewExporter(mockClient, mockRepo)
+
+	ctx := context.Background()
+
+	// Setup test data
+	highlight1 := readdeck.Highlight{ID: "h1", BookmarkID: "book1", Text: "First highlight"}
+	highlight2 := readdeck.Highlight{ID: "h2", BookmarkID: "book2", Text: "Second highlight"}
+	highlights := []readdeck.Highlight{highlight1, highlight2}
+
+	bookmark1 := readdeck.Bookmark{ID: "book1", Title: "Test Book 1"}
+	bookmark2 := readdeck.Bookmark{ID: "book2", Title: "Test Book 2"}
+
+	// Expected notes after repository processing
+	expectedNote1 := model.Note{
+		Path:       "/path/to/book1.md",
+		Bookmark:   bookmark1,
+		Highlights: []readdeck.Highlight{highlight1},
+	}
+
+	expectedNote2 := model.Note{
+		Path:       "/path/to/book2.md",
+		Bookmark:   bookmark2,
+		Highlights: []readdeck.Highlight{highlight2},
+	}
+
+	// Set up expectations
+	mockClient.On("GetHighlights", ctx).Return(highlights, nil)
+	mockClient.On("GetBookmark", ctx, "book1").Return(bookmark1, nil)
+	mockClient.On("GetBookmark", ctx, "book2").Return(bookmark2, nil)
+
+	// The mock repository should return the notes with paths set
+	mockRepo.On("Upsert", ctx, mock.MatchedBy(func(n model.Note) bool {
+		return n.Bookmark.ID == "book1"
+	})).Return(expectedNote1, nil)
+
+	mockRepo.On("Upsert", ctx, mock.MatchedBy(func(n model.Note) bool {
+		return n.Bookmark.ID == "book2"
+	})).Return(expectedNote2, nil)
+
+	// Call the function
+	notes, err := exporter.Export(ctx)
+
+	// Assertions
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(notes))
+
+	// Create a map for easier assertion
+	noteMap := make(map[string]model.Note)
+	for _, note := range notes {
+		noteMap[note.Bookmark.ID] = note
+	}
+
+	// Check each note
+	assert.Equal(t, expectedNote1, noteMap["book1"])
+	assert.Equal(t, expectedNote2, noteMap["book2"])
+
+	// Verify that all expectations were met
+	mockClient.AssertExpectations(t)
+	mockRepo.AssertExpectations(t)
 }
 
 func TestResolveBookmarks(t *testing.T) {
@@ -58,7 +132,7 @@ func TestResolveBookmarks(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(result))
 
-	resultMap := make(map[string]BookmarkHighlights)
+	resultMap := make(map[string]model.Note)
 	for _, item := range result {
 		resultMap[item.Bookmark.ID] = item
 	}
