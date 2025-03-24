@@ -42,7 +42,6 @@ func TestExport(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Setup test data
 	highlight1 := readdeck.Highlight{ID: "h1", BookmarkID: "book1", Text: "First highlight"}
 	highlight2 := readdeck.Highlight{ID: "h2", BookmarkID: "book2", Text: "Second highlight"}
 	highlights := []readdeck.Highlight{highlight1, highlight2}
@@ -50,7 +49,6 @@ func TestExport(t *testing.T) {
 	bookmark1 := readdeck.Bookmark{ID: "book1", Title: "Test Book 1"}
 	bookmark2 := readdeck.Bookmark{ID: "book2", Title: "Test Book 2"}
 
-	// Expected notes after repository processing
 	expectedNote1 := model.Note{
 		Path:       "/path/to/book1.md",
 		Bookmark:   bookmark1,
@@ -63,12 +61,10 @@ func TestExport(t *testing.T) {
 		Highlights: []readdeck.Highlight{highlight2},
 	}
 
-	// Set up expectations
 	mockClient.On("GetHighlights", ctx).Return(highlights, nil)
 	mockClient.On("GetBookmark", ctx, "book1").Return(bookmark1, nil)
 	mockClient.On("GetBookmark", ctx, "book2").Return(bookmark2, nil)
 
-	// The mock repository should return the notes with paths set
 	mockRepo.On("Upsert", ctx, mock.MatchedBy(func(n model.Note) bool {
 		return n.Bookmark.ID == "book1"
 	})).Return(expectedNote1, nil)
@@ -77,24 +73,20 @@ func TestExport(t *testing.T) {
 		return n.Bookmark.ID == "book2"
 	})).Return(expectedNote2, nil)
 
-	// Call the function
 	notes, err := exporter.Export(ctx)
 
-	// Assertions
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(notes))
 
-	// Create a map for easier assertion
 	noteMap := make(map[string]model.Note)
 	for _, note := range notes {
 		noteMap[note.Bookmark.ID] = note
 	}
 
-	// Check each note
 	assert.Equal(t, expectedNote1, noteMap["book1"])
 	assert.Equal(t, expectedNote2, noteMap["book2"])
 
-	// Verify that all expectations were met
+	// VerifyOnExit
 	mockClient.AssertExpectations(t)
 	mockRepo.AssertExpectations(t)
 }
@@ -148,7 +140,6 @@ func TestResolveBookmarks(t *testing.T) {
 	assert.Equal(t, 1, len(resultMap["book2"].Highlights))
 	assert.Equal(t, "h3", resultMap["book2"].Highlights[0].ID)
 
-	// Verify all expectations were met
 	mockClient.AssertExpectations(t)
 }
 
@@ -168,7 +159,6 @@ func TestResolveBookmarksError(t *testing.T) {
 
 	result, err := exporter.resolveBookmarks(ctx, input)
 
-	// Assertions
 	assert.Error(t, err)
 	assert.Nil(t, result)
 	assert.Contains(t, err.Error(), "book1")
