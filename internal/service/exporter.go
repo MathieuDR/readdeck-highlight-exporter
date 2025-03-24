@@ -29,7 +29,7 @@ func (e *Exporter) Export(ctx context.Context) (map[string][]readdeck.Highlight,
 		return nil, err
 	}
 
-	groupedHiglights := e.GroupHighlightsByBookmark(highlights)
+	groupedHiglights := e.groupHighlightsByBookmark(highlights)
 
 	// 1. Fetch highlights from readdeck
 	// 2. Group highlights by bookmark
@@ -42,7 +42,7 @@ func (e *Exporter) Export(ctx context.Context) (map[string][]readdeck.Highlight,
 	return groupedHiglights, nil
 }
 
-func (e *Exporter) ResolveBookmarks(ctx context.Context, dict map[string][]readdeck.Highlight) (map[*readdeck.Bookmark][]readdeck.Highlight, error) {
+func (e *Exporter) resolveBookmarks(ctx context.Context, dict map[string][]readdeck.Highlight) (map[*readdeck.Bookmark][]readdeck.Highlight, error) {
 	res := make(map[*readdeck.Bookmark][]readdeck.Highlight)
 	for id, highlights := range dict {
 		b, err := e.readdeckClient.GetBookmark(ctx, id)
@@ -57,7 +57,7 @@ func (e *Exporter) ResolveBookmarks(ctx context.Context, dict map[string][]readd
 	return res, nil
 }
 
-func (e *Exporter) GroupHighlightsByBookmark(highlights []readdeck.Highlight) map[string][]readdeck.Highlight {
+func (e *Exporter) groupHighlightsByBookmark(highlights []readdeck.Highlight) map[string][]readdeck.Highlight {
 	res := make(map[string][]readdeck.Highlight)
 
 	for _, h := range highlights {
@@ -67,6 +67,6 @@ func (e *Exporter) GroupHighlightsByBookmark(highlights []readdeck.Highlight) ma
 	return res
 }
 
-func (e *Exporter) ConvertToNotes(ctx context.Context, groupedHighlights map[string][]readdeck.Highlight) ([]model.Note, error) {
+func (e *Exporter) convertToNotes(ctx context.Context, groupedHighlights map[string][]readdeck.Highlight) ([]model.Note, error) {
 	return nil, nil
 }

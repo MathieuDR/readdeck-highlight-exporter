@@ -44,7 +44,7 @@ func TestGroupHighlightsByBookmark(t *testing.T) {
 		},
 	}
 
-	grouped := exporter.GroupHighlightsByBookmark(highlights)
+	grouped := exporter.groupHighlightsByBookmark(highlights)
 
 	assert.Equal(t, 3, len(grouped), "Should have 3 bookmark groups")
 	assert.Equal(t, 2, len(grouped["book1"]), "book1 should have 2 highlights")
@@ -54,4 +54,3 @@ func TestGroupHighlightsByBookmark(t *testing.T) {
 	assert.Equal(t, "h1", grouped["book1"][0].ID)
 	assert.Equal(t, "h2", grouped["book1"][1].ID)
 }
-
