@@ -1,16 +1,9 @@
 package model
 
-import (
-	"time"
-)
+import "github.com/mathieudr/readdeck-highlight-exporter/internal/readdeck"
 
 type Note struct {
-	ID           string
-	Title        string
-	Content      string
-	Source       string
-	BookmarkID   string
-	CreatedAt    time.Time
-	HighlightIDs []string
-	Tags         []string
+	Path       string
+	Bookmark   readdeck.Bookmark
+	Highlights []readdeck.Highlight
 }

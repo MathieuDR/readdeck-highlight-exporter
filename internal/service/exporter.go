@@ -21,8 +21,9 @@ func NewExporter(client readdeck.Client, repo repository.NoteRepository) *Export
 	}
 }
 
-// func (e *Exporter) Export(ctx context.Context) ([]model.Note, error) {
-func (e *Exporter) Export(ctx context.Context) (map[string][]readdeck.Highlight, error) {
+// Entry point for my command
+// Needs to get highlights, details, parse them and save them
+func (e *Exporter) Export(ctx context.Context) ([]model.Note, error) {
 	highlights, err := e.readdeckClient.GetHighlights(ctx)
 
 	if err != nil {
@@ -30,20 +31,18 @@ func (e *Exporter) Export(ctx context.Context) (map[string][]readdeck.Highlight,
 	}
 
 	groupedHiglights := e.groupHighlightsByBookmark(highlights)
+	bookmarkHighlights, err := e.resolveBookmarks(ctx, groupedHiglights)
 
-	// 1. Fetch highlights from readdeck
-	// 2. Group highlights by bookmark
-	// 3. Fetch bookmark details
-	// 4. For each bookmark, create notes
-	// 5. Check for existing notes (idempotency)
-	// 6. Save new/modified notes
-	// 7. Return the exported notes
+	if err != nil {
+		return nil, err
+	}
 
-	return groupedHiglights, nil
+	return bookmarkHighlights, nil
 }
 
-func (e *Exporter) resolveBookmarks(ctx context.Context, dict map[string][]readdeck.Highlight) (map[*readdeck.Bookmark][]readdeck.Highlight, error) {
-	res := make(map[*readdeck.Bookmark][]readdeck.Highlight)
+func (e *Exporter) resolveBookmarks(ctx context.Context, dict map[string][]readdeck.Highlight) ([]model.Note, error) {
+	res := make([]model.Note, 0, len(dict))
+
 	for id, highlights := range dict {
 		b, err := e.readdeckClient.GetBookmark(ctx, id)
 
@@ -51,7 +50,10 @@ func (e *Exporter) resolveBookmarks(ctx context.Context, dict map[string][]readd
 			return nil, fmt.Errorf("Could not retrieve bookmark with id %s: %w", id, err)
 		}
 
-		res[&b] = highlights
+		res = append(res, model.Note{
+			Bookmark:   b,
+			Highlights: highlights,
+		})
 	}
 
 	return res, nil
