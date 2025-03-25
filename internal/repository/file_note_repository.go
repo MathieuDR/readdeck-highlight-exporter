@@ -64,10 +64,25 @@ func (f *FileNoteRepository) findNotesInDirectory(dirPath string) ([]string, err
 	return notePaths, nil
 }
 
-// readNoteFile reads a file and returns its content
-func (f *FileNoteRepository) readNoteFile(filePath string) ([]byte, error) {
-	// Will be implemented later
-	return nil, nil
+// readNoteFiles reads multiple files and returns their parsed content
+func (f *FileNoteRepository) readNoteFiles(filePaths []string) ([]model.ParsedNote, error) {
+	results := make([]model.ParsedNote, 0, len(filePaths))
+
+	// For basic implementation, process sequentially
+	for _, path := range filePaths {
+		note, err := f.readNoteFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read note at %s: %w", path, err)
+		}
+		results = append(results, note)
+	}
+
+	return results, nil
+}
+
+// readNoteFile reads a single file and returns its parsed content
+func (f *FileNoteRepository) readNoteFile(filePath string) (model.ParsedNote, error) {
+	panic("not implemented")
 }
 
 // createOrUpdateNote creates or updates a note file
