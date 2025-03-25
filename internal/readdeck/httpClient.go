@@ -16,6 +16,10 @@ type HttpClient struct {
 	token   string
 }
 
+// LEARNING
+// This is a compile-time check to make sure it implements the interface
+var _ Client = (*HttpClient)(nil)
+
 type highlightsCall struct {
 	Highlights  []Highlight
 	CurrentPage int

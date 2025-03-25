@@ -1,3 +1,4 @@
+// internal/repository/note_repository.go
 package repository
 
 import (
@@ -7,5 +8,7 @@ import (
 )
 
 type NoteRepository interface {
-	Upsert(ctx context.Context, note model.Note) (model.Note, error)
+	UpsertAll(ctx context.Context, notes []model.Note) ([]model.Note, error)
 }
+
+var _ NoteRepository = (*FileNoteRepository)(nil)
