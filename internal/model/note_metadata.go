@@ -10,8 +10,13 @@ type NoteMetadata struct {
 	Aliases    []string  `yaml:"aliases,omitempty"`
 	Tags       []string  `yaml:"tags,omitempty"`
 	Created    time.Time `yaml:"created"`
-	ReaddeckID string    `yaml:"readdeck-id,omitempty"`
-	Publish    bool      `yaml:"publish,omitempty"`
+	ReaddeckID string    `yaml:"readdeck-id"`
+	Media      string    `yaml:"media"`
+	Type       string    `yaml:"media-type"`
+	Published  time.Time `yaml:"media-published"`
+	ArchiveUrl string    `yaml:"readdeck-url"`
+	Site       string    `yaml:"media-url"`
+	Authors    []string  `yaml:"authors"`
 }
 
 // ParsedNote contains both metadata and content for a parsed note file

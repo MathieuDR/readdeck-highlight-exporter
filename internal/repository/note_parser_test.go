@@ -12,6 +12,7 @@ import (
 func TestYAMLFrontmatterParser_ParseNote(t *testing.T) {
 	// Setup test time
 	testTime, _ := time.Parse(time.RFC3339, "2025-03-26T14:00:00Z")
+	publishTime, _ := time.Parse(time.RFC3339, "2020-03-26T14:00:00Z")
 
 	tests := []struct {
 		name    string
@@ -58,8 +59,14 @@ tags:
   - papers
 created: 2025-03-26T14:00:00Z
 readdeck-id: rd789
-publish: true
-other: true
+media: "Rework"
+media-type: article
+media-published: 2020-03-26T14:00:00Z
+readdeck-url: https://read.deck.com
+authors:
+  - Jason
+  - Bourne
+media-url: https://bourne.identity
 ---
 Full content here.`),
 			path: "/path/to/full.md",
@@ -69,8 +76,13 @@ Full content here.`),
 					Aliases:    []string{"alias1", "alias2"},
 					Tags:       []string{"research", "papers"},
 					Created:    testTime,
+					Published:  publishTime,
+					Media:      "Rework",
+					Type:       "article",
+					ArchiveUrl: "https://read.deck.com",
+					Authors:    []string{"Jason", "Bourne"},
+					Site:       "https://bourne.identity",
 					ReaddeckID: "rd789",
-					Publish:    true,
 				},
 				Content: "Full content here.",
 				Path:    "/path/to/full.md",
