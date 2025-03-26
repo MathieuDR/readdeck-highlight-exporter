@@ -115,3 +115,38 @@ func (m *mockNoteParser) GenerateNoteContent(note model.Note) ([]byte, error) {
 	return nil, nil
 }
 
+func TestFileNoteRepository_readNoteFile(t *testing.T) {
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for receiver constructor.
+		basePath    string
+		fleetingDir string
+		parser      NoteParser
+		// Named input parameters for target function.
+		filePath string
+		want     model.ParsedNote
+		wantErr  bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := NewFileNoteRepository(tt.basePath, tt.fleetingDir, tt.parser)
+			got, gotErr := f.readNoteFile(tt.filePath)
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("readNoteFile() failed: %v", gotErr)
+				}
+				return
+			}
+			if tt.wantErr {
+				t.Fatal("readNoteFile() succeeded unexpectedly")
+			}
+			// TODO: update the condition below to compare got with tt.want.
+			if true {
+				t.Errorf("readNoteFile() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+

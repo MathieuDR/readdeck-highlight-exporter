@@ -6,14 +6,12 @@ import (
 
 // NoteMetadata represents the YAML frontmatter in a note file
 type NoteMetadata struct {
-	ID         string    `yaml:"id"`
+	ID         string    `validate:"required" yaml:"id"`
 	Aliases    []string  `yaml:"aliases,omitempty"`
 	Tags       []string  `yaml:"tags,omitempty"`
 	Created    time.Time `yaml:"created"`
-	ReadDeckID string    `yaml:"readdeck-id,omitempty"`
-	Processed  bool      `yaml:"processed,omitempty"`
+	ReaddeckID string    `yaml:"readdeck-id,omitempty"`
 	Publish    bool      `yaml:"publish,omitempty"`
-	Reference  bool      `yaml:"reference,omitempty"`
 }
 
 // ParsedNote contains both metadata and content for a parsed note file
