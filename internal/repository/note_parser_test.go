@@ -1,17 +1,23 @@
 package repository_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/repository"
+	"github.com/mathieudr/readdeck-highlight-exporter/internal/util"
+	"github.com/stretchr/testify/require"
 )
 
 func TestYAMLFrontmatterParser_ParseNote(t *testing.T) {
 	testTime, _ := time.Parse(time.RFC3339, "2025-03-26T14:00:00Z")
 	publishTime, _ := time.Parse(time.RFC3339, "2020-03-26T14:00:00Z")
+	hash, err := util.NewGobHasher().Encode([]string{"h1", "h2"})
+
+	require.NoError(t, err, "Could not hash for tests")
 
 	tests := []struct {
 		name    string
@@ -41,14 +47,15 @@ Multiple paragraphs are supported.`),
 					ReaddeckID: "rd456",
 					Tags:       []string{"go", "programming"},
 				},
-				Content: "This is the content of the note.\n\nMultiple paragraphs are supported.",
-				Path:    "/path/to/note.md",
+				HighlightIDs: []string{},
+				Content:      "This is the content of the note.\n\nMultiple paragraphs are supported.",
+				Path:         "/path/to/note.md",
 			},
 			wantErr: false,
 		},
 		{
 			name: "note with all metadata fields",
-			content: []byte(`---
+			content: []byte(fmt.Sprintf(`---
 id: full-note
 aliases:
   - "alias1"
@@ -60,6 +67,7 @@ created: 2025-03-26T14:00:00Z
 readdeck-id: rd789
 media: "Rework"
 media-type: article
+readdeck-hash: %s
 media-published: 2020-03-26T14:00:00Z
 readdeck-url: https://read.deck.com
 authors:
@@ -67,24 +75,26 @@ authors:
   - Bourne
 media-url: https://bourne.identity
 ---
-Full content here.`),
+Full content here.`, hash)),
 			path: "/path/to/full.md",
 			want: model.ParsedNote{
 				Metadata: model.NoteMetadata{
-					ID:         "full-note",
-					Aliases:    []string{"alias1", "alias2"},
-					Tags:       []string{"research", "papers"},
-					Created:    testTime,
-					Published:  publishTime,
-					Media:      "Rework",
-					Type:       "article",
-					ArchiveUrl: "https://read.deck.com",
-					Authors:    []string{"Jason", "Bourne"},
-					Site:       "https://bourne.identity",
-					ReaddeckID: "rd789",
+					ID:           "full-note",
+					Aliases:      []string{"alias1", "alias2"},
+					Tags:         []string{"research", "papers"},
+					Created:      testTime,
+					Published:    publishTime,
+					Media:        "Rework",
+					Type:         "article",
+					ArchiveUrl:   "https://read.deck.com",
+					Authors:      []string{"Jason", "Bourne"},
+					Site:         "https://bourne.identity",
+					ReaddeckID:   "rd789",
+					ReaddeckHash: hash,
 				},
-				Content: "Full content here.",
-				Path:    "/path/to/full.md",
+				HighlightIDs: []string{"h1", "h2"},
+				Content:      "Full content here.",
+				Path:         "/path/to/full.md",
 			},
 			wantErr: false,
 		},
@@ -154,8 +164,9 @@ created: 2025-03-26T14:00:00Z
 					ID:      "note123",
 					Created: testTime,
 				},
-				Content: "",
-				Path:    "/path/to/empty-content.md",
+				HighlightIDs: []string{},
+				Content:      "",
+				Path:         "/path/to/empty-content.md",
 			},
 			wantErr: false,
 		},

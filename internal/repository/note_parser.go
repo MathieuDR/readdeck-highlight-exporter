@@ -7,6 +7,7 @@ import (
 	"github.com/adrg/frontmatter"
 	"github.com/go-playground/validator/v10"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
+	"github.com/mathieudr/readdeck-highlight-exporter/internal/util"
 )
 
 type NoteParser interface {
@@ -16,11 +17,13 @@ type NoteParser interface {
 
 type YAMLFrontmatterParser struct {
 	Validator *validator.Validate
+	Hasher    *util.GobHasher
 }
 
 func NewYAMLFrontmatterParser() *YAMLFrontmatterParser {
 	return &YAMLFrontmatterParser{
 		Validator: validator.New(),
+		Hasher:    util.NewGobHasher(),
 	}
 }
 
@@ -38,11 +41,16 @@ func (p *YAMLFrontmatterParser) ParseNote(content []byte, path string) (model.Pa
 		return model.ParsedNote{}, fmt.Errorf("Frontmatter is invalid: %w", err)
 	}
 
+	highlightIDs, err := p.decodeHighlightIDsHash(matter.ReaddeckHash)
+	if err != nil {
+		return model.ParsedNote{}, err
+	}
+
 	return model.ParsedNote{
 		Path:         path,
 		Metadata:     matter,
 		Content:      string(textContent),
-		HighlightIDs: p.decodeHighlightIDsHash(matter.ReaddeckHash),
+		HighlightIDs: highlightIDs,
 	}, nil
 }
 
@@ -50,6 +58,16 @@ func (p *YAMLFrontmatterParser) GenerateNoteContent(note model.Note) ([]byte, er
 	return nil, nil
 }
 
-func (p *YAMLFrontmatterParser) decodeHighlightIDsHash(hash string) []string {
-	return nil
+func (p *YAMLFrontmatterParser) decodeHighlightIDsHash(hash string) ([]string, error) {
+	if hash == "" {
+		return []string{}, nil
+	}
+
+	ids, err := p.Hasher.Decode(hash)
+
+	if err != nil {
+		return nil, fmt.Errorf("Could not decode id's: %w", err)
+	}
+
+	return ids, err
 }
