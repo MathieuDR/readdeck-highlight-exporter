@@ -12,10 +12,8 @@ import (
 )
 
 func TestFileNoteRepository_findNotesInDirectory(t *testing.T) {
-	// Create a temporary test directory structure
 	tempDir := t.TempDir()
 
-	// Set up test directories and files
 	testDirs := []string{
 		filepath.Join(tempDir, "notes"),
 		filepath.Join(tempDir, "notes/subfolder"),
@@ -27,7 +25,6 @@ func TestFileNoteRepository_findNotesInDirectory(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	// Create test files
 	testFiles := map[string]bool{
 		filepath.Join(tempDir, "notes/note1.md"):           true,
 		filepath.Join(tempDir, "notes/note2.md"):           true,
@@ -41,7 +38,6 @@ func TestFileNoteRepository_findNotesInDirectory(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	// Create mock parser
 	mockParser := &mockNoteParser{}
 
 	// Define test cases
@@ -104,7 +100,6 @@ func TestFileNoteRepository_findNotesInDirectory(t *testing.T) {
 	}
 }
 
-// Mock parser for testing
 type mockNoteParser struct{}
 
 func (m *mockNoteParser) ParseNote(content []byte, path string) (model.ParsedNote, error) {
@@ -149,4 +144,3 @@ func TestFileNoteRepository_readNoteFile(t *testing.T) {
 		})
 	}
 }
-

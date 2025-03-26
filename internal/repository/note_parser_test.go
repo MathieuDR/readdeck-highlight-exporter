@@ -10,7 +10,6 @@ import (
 )
 
 func TestYAMLFrontmatterParser_ParseNote(t *testing.T) {
-	// Setup test time
 	testTime, _ := time.Parse(time.RFC3339, "2025-03-26T14:00:00Z")
 	publishTime, _ := time.Parse(time.RFC3339, "2020-03-26T14:00:00Z")
 

@@ -1,4 +1,3 @@
-// internal/repository/note_repository.go
 package repository
 
 import (

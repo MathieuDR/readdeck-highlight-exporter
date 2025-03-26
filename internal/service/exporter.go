@@ -21,7 +21,7 @@ func NewExporter(client readdeck.Client, repo repository.NoteRepository) *Export
 	}
 }
 
-// Entry point for my command
+// Entrypoint
 // Needs to get highlights, details, parse them and save them
 func (e *Exporter) Export(ctx context.Context) ([]model.Note, error) {
 	highlights, err := e.readdeckClient.GetHighlights(ctx)
@@ -37,7 +37,7 @@ func (e *Exporter) Export(ctx context.Context) ([]model.Note, error) {
 		return nil, err
 	}
 
-	return e.upsertNotes(ctx, bookmarkHighlights)
+	return e.noteRepository.UpsertAll(ctx, bookmarkHighlights)
 }
 
 func (e *Exporter) resolveBookmarks(ctx context.Context, dict map[string][]readdeck.Highlight) ([]model.Note, error) {
@@ -67,19 +67,4 @@ func (e *Exporter) groupHighlightsByBookmark(highlights []readdeck.Highlight) ma
 	}
 
 	return res
-}
-
-func (e *Exporter) upsertNotes(ctx context.Context, notes []model.Note) ([]model.Note, error) {
-	res := make([]model.Note, 0, len(notes))
-
-	for _, note := range notes {
-		newNote, err := e.noteRepository.Upsert(ctx, note)
-		if err != nil {
-			return nil, fmt.Errorf("Could not upsert note for %s (%s): %w", note.Bookmark.Title, note.Bookmark.ID, err)
-		}
-
-		res = append(res, newNote)
-	}
-
-	return res, nil
 }

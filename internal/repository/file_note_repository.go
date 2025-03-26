@@ -1,4 +1,3 @@
-// internal/repository/file_note_repository.go
 package repository
 
 import (
@@ -17,7 +16,6 @@ type FileNoteRepository struct {
 	parser      NoteParser
 }
 
-// NewFileNoteRepository creates a new FileNoteRepository
 func NewFileNoteRepository(basePath, fleetingDir string, parser NoteParser) *FileNoteRepository {
 	return &FileNoteRepository{
 		basePath:    basePath,
@@ -26,9 +24,7 @@ func NewFileNoteRepository(basePath, fleetingDir string, parser NoteParser) *Fil
 	}
 }
 
-// UpsertAll implements NoteRepository.UpsertAll
 func (f *FileNoteRepository) UpsertAll(ctx context.Context, notes []model.Note) ([]model.Note, error) {
-	// Will be implemented later - focusing on tests first
 	panic("not implemented")
 }
 
@@ -64,11 +60,10 @@ func (f *FileNoteRepository) findNotesInDirectory(dirPath string) ([]string, err
 	return notePaths, nil
 }
 
-// readNoteFiles reads multiple files and returns their parsed content
 func (f *FileNoteRepository) readNoteFiles(filePaths []string) ([]model.ParsedNote, error) {
 	results := make([]model.ParsedNote, 0, len(filePaths))
 
-	// For basic implementation, process sequentially
+	// Can make parallel later
 	for _, path := range filePaths {
 		note, err := f.readNoteFile(path)
 		if err != nil {
@@ -80,13 +75,10 @@ func (f *FileNoteRepository) readNoteFiles(filePaths []string) ([]model.ParsedNo
 	return results, nil
 }
 
-// readNoteFile reads a single file and returns its parsed content
 func (f *FileNoteRepository) readNoteFile(filePath string) (model.ParsedNote, error) {
 	panic("not implemented")
 }
 
-// createOrUpdateNote creates or updates a note file
 func (f *FileNoteRepository) createOrUpdateNote(note model.Note) error {
-	// Will be implemented later
 	return nil
 }

@@ -9,13 +9,11 @@ import (
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
 )
 
-// NoteParser defines the interface for parsing note files
 type NoteParser interface {
 	ParseNote(content []byte, path string) (model.ParsedNote, error)
 	GenerateNoteContent(note model.Note) ([]byte, error)
 }
 
-// YAMLFrontmatterParser implements NoteParser for YAML frontmatter notes
 type YAMLFrontmatterParser struct {
 	Validator *validator.Validate
 }
@@ -41,21 +39,17 @@ func (p *YAMLFrontmatterParser) ParseNote(content []byte, path string) (model.Pa
 	}
 
 	return model.ParsedNote{
-		Path:       path,
-		Metadata:   matter,
-		Content:    string(textContent),
-		Highlights: nil,
+		Path:         path,
+		Metadata:     matter,
+		Content:      string(textContent),
+		HighlightIDs: p.decodeHighlightIDsHash(matter.ReaddeckHash),
 	}, nil
 }
 
-// GenerateNoteContent generates note content from a model.Note
 func (p *YAMLFrontmatterParser) GenerateNoteContent(note model.Note) ([]byte, error) {
-	// Will be implemented later
 	return nil, nil
 }
 
-// parseHighlightsFromContent extracts highlights from note content
-func (p *YAMLFrontmatterParser) parseHighlightsFromContent(content string) []model.ParsedHighlight {
-	// Will be implemented later
+func (p *YAMLFrontmatterParser) decodeHighlightIDsHash(hash string) []string {
 	return nil
 }
