@@ -16,23 +16,25 @@ type NoteParser interface {
 }
 
 // YAMLFrontmatterParser implements NoteParser for YAML frontmatter notes
-type YAMLFrontmatterParser struct{}
-
-func NewYAMLFrontmatterParser() *YAMLFrontmatterParser {
-	return &YAMLFrontmatterParser{}
+type YAMLFrontmatterParser struct {
+	Validator *validator.Validate
 }
 
-// ParseNote parses a note file content into a ParsedNote
+func NewYAMLFrontmatterParser() *YAMLFrontmatterParser {
+	return &YAMLFrontmatterParser{
+		Validator: validator.New(),
+	}
+}
+
 func (p *YAMLFrontmatterParser) ParseNote(content []byte, path string) (model.ParsedNote, error) {
 	var matter model.NoteMetadata
-	text_content, err := frontmatter.MustParse(bytes.NewReader(content), &matter)
+	textContent, err := frontmatter.MustParse(bytes.NewReader(content), &matter)
 
 	if err != nil {
 		return model.ParsedNote{}, fmt.Errorf("Could not parse frontmatter: %w", err)
 	}
 
-	validator := validator.New()
-	err = validator.Struct(&matter)
+	err = p.Validator.Struct(&matter)
 
 	if err != nil {
 		return model.ParsedNote{}, fmt.Errorf("Frontmatter is invalid: %w", err)
@@ -41,7 +43,7 @@ func (p *YAMLFrontmatterParser) ParseNote(content []byte, path string) (model.Pa
 	return model.ParsedNote{
 		Path:       path,
 		Metadata:   matter,
-		Content:    string(text_content),
+		Content:    string(textContent),
 		Highlights: nil,
 	}, nil
 }
