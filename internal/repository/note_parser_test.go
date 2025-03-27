@@ -2,13 +2,13 @@ package repository_test
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 	"time"
 
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/repository"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/util"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -177,21 +177,14 @@ created: 2025-03-26T14:00:00Z
 			p := repository.NewYAMLFrontmatterParser()
 			got, err := p.ParseNote(tt.content, tt.path)
 
-			if err != nil {
-				if !tt.wantErr {
-					t.Errorf("ParseNote() error = %v, wantErr %v", err, tt.wantErr)
-				}
+			if tt.wantErr {
+				assert.Error(t, err, "Expected an error for test case: %s", tt.name)
 				return
 			}
 
-			if tt.wantErr {
-				t.Logf("\n%+v\n\n", got)
-				t.Fatal("ParseNote() succeeded unexpectedly")
-			}
-
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ParseNote() = %+v, want %+v", got, tt.want)
-			}
+			require.NoError(t, err, "Unexpected error in test case: %s", tt.name)
+			assert.Equal(t, tt.want, got, "Parsed note should match expected result")
 		})
 	}
 }
+
