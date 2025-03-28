@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -24,8 +26,75 @@ func NewFileNoteRepository(basePath, fleetingDir string, parser NoteParser) *Fil
 	}
 }
 
+func (f *FileNoteRepository) getFleetingNotesPath() string {
+	return path.Join(f.basePath, f.fleetingDir)
+}
+
 func (f *FileNoteRepository) UpsertAll(ctx context.Context, notes []model.Note) ([]model.Note, error) {
-	panic("not implemented")
+	notePaths, err := f.findNotesInDirectory(f.getFleetingNotesPath())
+
+	if err != nil {
+		return nil, fmt.Errorf("Could not find note paths: %w", err)
+	}
+
+	parsedNotes, err := f.readNoteFiles(notePaths)
+	if err != nil {
+		return nil, err
+	}
+
+	lookup := f.createLookup(parsedNotes)
+	result := make([]model.Note, len(notes))
+
+	for i, toWriteNote := range notes {
+		var err error
+
+		result[i], err = f.processNote(toWriteNote, lookup)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
+}
+
+func (f *FileNoteRepository) processNote(note model.Note, lookup map[string]model.ParsedNote) (model.Note, error) {
+	bookmarkID := note.Bookmark.ID
+	existingNote, exists := lookup[bookmarkID]
+
+	if exists {
+		updatedNote, err := f.updateNote(existingNote, note)
+		if err != nil {
+			return model.Note{}, fmt.Errorf("Could not update note %s (%s): %w",
+				bookmarkID, existingNote.Path, err)
+		}
+		return updatedNote, nil
+	}
+
+	newNote, err := f.createNote(note)
+	if err != nil {
+		return model.Note{}, fmt.Errorf("Could not create note %s: %w",
+			bookmarkID, err)
+	}
+	return newNote, nil
+}
+
+func (f *FileNoteRepository) updateNote(existingNote model.ParsedNote, request model.Note) (model.Note, error) {
+	return model.Note{}, nil
+
+}
+func (f *FileNoteRepository) createNote(request model.Note) (model.Note, error) {
+	return model.Note{}, nil
+}
+
+func (f *FileNoteRepository) createLookup(parsedNotes []model.ParsedNote) map[string]model.ParsedNote {
+	lookup := make(map[string]model.ParsedNote, len(parsedNotes))
+	for _, p := range parsedNotes {
+		if p.Metadata.ID != "" {
+			lookup[p.Metadata.ID] = p
+		}
+	}
+	return lookup
 }
 
 // LEARNING: Even though it's stateless it ONLY makes sense in the
@@ -76,9 +145,15 @@ func (f *FileNoteRepository) readNoteFiles(filePaths []string) ([]model.ParsedNo
 }
 
 func (f *FileNoteRepository) readNoteFile(filePath string) (model.ParsedNote, error) {
-	panic("not implemented")
-}
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return model.ParsedNote{}, fmt.Errorf("failed to read file %s: %w", filePath, err)
+	}
 
-func (f *FileNoteRepository) createOrUpdateNote(note model.Note) error {
-	return nil
+	parsedNote, err := f.parser.ParseNote(content, filePath)
+	if err != nil {
+		return model.ParsedNote{}, fmt.Errorf("failed to parse note at %s: %w", filePath, err)
+	}
+
+	return parsedNote, nil
 }

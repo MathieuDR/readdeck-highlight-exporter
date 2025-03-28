@@ -20,9 +20,9 @@ type MockNoteRepository struct {
 	mock.Mock
 }
 
-func (m *MockNoteRepository) Upsert(ctx context.Context, note model.Note) (model.Note, error) {
+func (m *MockNoteRepository) UpsertAll(ctx context.Context, note []model.Note) ([]model.Note, error) {
 	args := m.Called(ctx, note)
-	return args.Get(0).(model.Note), args.Error(1)
+	return args.Get(0).([]model.Note), args.Error(1)
 }
 
 func (m *MockReaddeckClient) GetHighlights(ctx context.Context) ([]readdeck.Highlight, error) {
