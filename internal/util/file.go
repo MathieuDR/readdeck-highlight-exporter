@@ -7,11 +7,13 @@ import (
 	"time"
 )
 
-func GenerateId(title string) string {
+func GenerateId(title string, timestamp time.Time) string {
 	slug := sluggify(title)
-	timestamp := time.Now().Unix()
+	if slug == "" {
+		return fmt.Sprintf("%d", timestamp.Unix())
+	}
 
-	return fmt.Sprintf("%d-%s", timestamp, slug)
+	return fmt.Sprintf("%d-%s", timestamp.Unix(), slug)
 }
 
 var slugRegex = regexp.MustCompile("[^a-zA-Z0-9]+")
