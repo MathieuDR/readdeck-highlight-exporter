@@ -83,8 +83,43 @@ func (f *FileNoteRepository) updateNote(existingNote model.ParsedNote, request m
 	return model.Note{}, nil
 
 }
+
+// TODO: Make request a copy, so it's immutable
 func (f *FileNoteRepository) createNote(request model.Note) (model.Note, error) {
-	return model.Note{}, nil
+	bytes, id, err := f.parser.GenerateNoteContent(request)
+
+	if err != nil {
+		return model.Note{}, fmt.Errorf("Could not generate bytes: %w", err)
+	}
+
+	path := fmt.Sprintf("%s/%s.md", f.getFleetingNotesPath(), id)
+	request.Path = path
+	err = f.writeBytes(bytes, path)
+
+	if err != nil {
+		return model.Note{}, err
+	}
+
+	return request, nil
+}
+
+func (f *FileNoteRepository) writeBytes(bytes []byte, path string) error {
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	if err != nil {
+		return fmt.Errorf("Can not open file %s: %w", path, err)
+	}
+
+	_, err = file.Write(bytes)
+
+	if err != nil {
+		return fmt.Errorf("Can not write file %s: %w", path, err)
+	}
+
+	if err := file.Close(); err != nil {
+		return fmt.Errorf("Can not close file %s: %w", path, err)
+	}
+
+	return nil
 }
 
 func (f *FileNoteRepository) createLookup(parsedNotes []model.ParsedNote) map[string]model.ParsedNote {

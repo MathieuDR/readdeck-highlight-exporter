@@ -12,7 +12,7 @@ import (
 
 type NoteParser interface {
 	ParseNote(content []byte, path string) (model.ParsedNote, error)
-	GenerateNoteContent(note model.Note) ([]byte, error)
+	GenerateNoteContent(note model.Note) ([]byte, string, error)
 }
 
 type YAMLFrontmatterParser struct {
@@ -54,7 +54,7 @@ func (p *YAMLFrontmatterParser) ParseNote(content []byte, path string) (model.Pa
 	}, nil
 }
 
-func (p *YAMLFrontmatterParser) GenerateNoteContent(note model.Note) ([]byte, error) {
+func (p *YAMLFrontmatterParser) GenerateNoteContent(note model.Note) ([]byte, string, error) {
 	return nil, nil
 }
 
