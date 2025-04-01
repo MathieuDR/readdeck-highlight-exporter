@@ -86,7 +86,7 @@ func (f *FileNoteRepository) updateNote(existingNote model.ParsedNote, request m
 
 // TODO: Make request a copy, so it's immutable
 func (f *FileNoteRepository) createNote(request model.Note) (model.Note, error) {
-	bytes, id, err := f.parser.GenerateNoteContent(request)
+	content, id, err := f.parser.GenerateNoteContent(request)
 
 	if err != nil {
 		return model.Note{}, fmt.Errorf("Could not generate bytes: %w", err)
@@ -94,7 +94,7 @@ func (f *FileNoteRepository) createNote(request model.Note) (model.Note, error) 
 
 	path := fmt.Sprintf("%s/%s.md", f.getFleetingNotesPath(), id)
 	request.Path = path
-	err = f.writeBytes(bytes, path)
+	err = f.writeBytes([]byte(content), path)
 
 	if err != nil {
 		return model.Note{}, err
