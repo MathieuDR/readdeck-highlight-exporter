@@ -93,7 +93,7 @@ func (p *YAMLFrontmatterParser) GenerateNoteContent(note model.Note) (NoteOperat
 	}
 
 	bytes = append(bytes, frontmatter...)
-	bytes = append(bytes, []byte(fmt.Sprintf("\n%s\n\n", metadata.Aliases[0]))...)
+	bytes = append(bytes, []byte(fmt.Sprintf("# %s\n\n", metadata.Aliases[0]))...)
 
 	groups := p.groupHighlightsByColor(note.Highlights)
 	for color, highlights := range groups {
@@ -166,7 +166,7 @@ func (p *YAMLFrontmatterParser) generateFrontmatter(metadata model.NoteMetadata)
 		return nil, fmt.Errorf("Could not format metadata: %w", err)
 	}
 
-	return yamlData, nil
+	return []byte(fmt.Sprintf("---\n%s---\n", yamlData)), nil
 }
 
 func (p *YAMLFrontmatterParser) decodeHighlightIDsHash(hash string) ([]string, error) {
