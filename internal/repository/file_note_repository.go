@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -33,8 +32,6 @@ func (f *FileNoteRepository) getFleetingNotesPath() string {
 
 func (f *FileNoteRepository) UpsertAll(ctx context.Context, notes []model.Note) ([]model.Note, error) {
 	notePaths, err := f.findNotesInDirectory(f.getFleetingNotesPath())
-	log.Printf("notes in %s: %d", f.getFleetingNotesPath(), len(notePaths))
-	// log.Printf("PATHS: %v", notePaths)
 
 	if err != nil {
 		return nil, fmt.Errorf("Could not find note paths: %w", err)
@@ -83,14 +80,11 @@ func (f *FileNoteRepository) processNote(note model.Note, lookup map[string]mode
 }
 
 func (f *FileNoteRepository) updateNote(existingNote model.ParsedNote, request model.Note) (model.Note, error) {
-	log.Printf("Note needs update: %s", existingNote.Metadata.Media)
 	return model.Note{}, nil
-
 }
 
 // TODO: Make request a copy, so it's immutable
 func (f *FileNoteRepository) createNote(request model.Note) (model.Note, error) {
-	log.Printf("Note needs creation: %s", request.Bookmark.Title)
 	operation, err := f.parser.GenerateNoteContent(request)
 	if err != nil {
 		return model.Note{}, fmt.Errorf("Could not generate bytes: %w", err)
