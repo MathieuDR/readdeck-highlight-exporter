@@ -17,7 +17,7 @@ import (
 
 type NoteParser interface {
 	ParseNote(content []byte, path string) (model.ParsedNote, error)
-	GenerateNoteContent(note model.Note) (string, string, error)
+	GenerateNoteContent(note model.Note) (NoteOperation, error)
 }
 
 type ColorConfig struct {
@@ -26,8 +26,8 @@ type ColorConfig struct {
 }
 
 type NoteOperation struct {
-	ID      string
-	Content []byte
+	Metadata model.NoteMetadata
+	Content  []byte
 }
 
 type YAMLFrontmatterParser struct {
@@ -80,17 +80,16 @@ func (p *YAMLFrontmatterParser) ParseNote(content []byte, path string) (model.Pa
 }
 
 func (p *YAMLFrontmatterParser) GenerateNoteContent(note model.Note) (NoteOperation, error) {
+	metadata := p.generateMetadata(note.Bookmark)
 	bytes := make([]byte, 0)
-	frontmatter, err := p.generateFrontmatter(model.NoteMetadata{})
+	frontmatter, err := p.generateFrontmatter(metadata)
 
 	if err != nil {
 		return NoteOperation{}, err
 	}
 
 	bytes = append(bytes, frontmatter...)
-
-	noteTitle := util.Capitalize(fmt.Sprintf("%s highlights", note.Bookmark.Title))
-	bytes = append(bytes, []byte(fmt.Sprintf("\n%s\n\n", noteTitle))...)
+	bytes = append(bytes, []byte(fmt.Sprintf("\n%s\n\n", metadata.Aliases[0]))...)
 
 	groups := p.groupHighlightsByColor(note.Highlights)
 	for color, highlights := range groups {
@@ -99,8 +98,8 @@ func (p *YAMLFrontmatterParser) GenerateNoteContent(note model.Note) (NoteOperat
 	}
 
 	return NoteOperation{
-		ID:      util.GenerateId(note.Bookmark.Title, time.Now()),
-		Content: bytes,
+		Metadata: metadata,
+		Content:  bytes,
 	}, nil
 }
 
@@ -127,6 +126,22 @@ func (p *YAMLFrontmatterParser) groupHighlightsByColor(highlights []readdeck.Hig
 	}
 
 	return p.sortHighlightGroups(res)
+}
+
+func (p *YAMLFrontmatterParser) generateMetadata(bookmark readdeck.Bookmark) model.NoteMetadata {
+	return model.NoteMetadata{
+		ID:         util.GenerateId(bookmark.Title, time.Now()),
+		Aliases:    []string{fmt.Sprintf("%s highlights", util.Capitalize(bookmark.Title))},
+		Tags:       bookmark.Labels,
+		Created:    bookmark.Created,
+		ReaddeckID: bookmark.ID,
+		Media:      bookmark.Title,
+		Type:       bookmark.Type,
+		Published:  bookmark.Published,
+		ArchiveUrl: bookmark.Href,
+		Site:       bookmark.SiteUrl,
+		Authors:    bookmark.Authors,
+	}
 }
 
 func (p *YAMLFrontmatterParser) generateFrontmatter(metadata model.NoteMetadata) ([]byte, error) {
