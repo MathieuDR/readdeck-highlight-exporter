@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/adrg/frontmatter"
 	"github.com/go-playground/validator/v10"
@@ -24,6 +25,11 @@ type ColorConfig struct {
 	ColorOrder []string
 }
 
+type NoteOperation struct {
+	ID      string
+	Content []byte
+}
+
 type YAMLFrontmatterParser struct {
 	Validator   *validator.Validate
 	Hasher      *util.GobHasher
@@ -35,8 +41,13 @@ func NewYAMLFrontmatterParser() *YAMLFrontmatterParser {
 		Validator: validator.New(),
 		Hasher:    util.NewGobHasher(),
 		ColorConfig: ColorConfig{
-			ColorNames: make(map[string]string),
-			ColorOrder: []string{},
+			ColorNames: map[string]string{
+				"yellow": "General highlights",
+				"red":    "Thought-provoking insights",
+				"blue":   "Important references",
+				"green":  "Key takeaways",
+			},
+			ColorOrder: []string{"green", "red", "yellow", "blue"},
 		},
 	}
 }
@@ -68,22 +79,37 @@ func (p *YAMLFrontmatterParser) ParseNote(content []byte, path string) (model.Pa
 	}, nil
 }
 
-func (p *YAMLFrontmatterParser) GenerateNoteContent(note model.Note) (string, string, error) {
+func (p *YAMLFrontmatterParser) GenerateNoteContent(note model.Note) (NoteOperation, error) {
+	bytes := make([]byte, 0)
 	frontmatter, err := p.generateFrontmatter(model.NoteMetadata{})
 
 	if err != nil {
-		return "", "", err
+		return NoteOperation{}, err
 	}
 
-	return string(frontmatter), "", nil
+	bytes = append(bytes, frontmatter...)
+
+	noteTitle := util.Capitalize(fmt.Sprintf("%s highlights", note.Bookmark.Title))
+	bytes = append(bytes, []byte(fmt.Sprintf("\n%s\n\n", noteTitle))...)
+
+	groups := p.groupHighlightsByColor(note.Highlights)
+	for color, highlights := range groups {
+		bytes = append(bytes, p.highlightTitleBytes(color)...)
+		bytes = append(bytes, p.highlightBodyBytes(highlights)...)
+	}
+
+	return NoteOperation{
+		ID:      util.GenerateId(note.Bookmark.Title, time.Now()),
+		Content: bytes,
+	}, nil
 }
 
-func (p *YAMLFrontmatterParser) highlightToTitle(highlight readdeck.Highlight) []byte {
-	colour := p.colourToFriendlyName(highlight.Color)
+func (p *YAMLFrontmatterParser) highlightTitleBytes(color string) []byte {
+	colour := p.colourToFriendlyName(color)
 	return []byte(fmt.Sprintf("## %s\n", colour))
 }
 
-func (p *YAMLFrontmatterParser) highlightsToBytes(highlights []readdeck.Highlight) []byte {
+func (p *YAMLFrontmatterParser) highlightBodyBytes(highlights []readdeck.Highlight) []byte {
 	result := make([]byte, 0)
 	for _, h := range highlights {
 		highlightBytes := []byte(fmt.Sprintf("%s\n\n", h.Text))
@@ -137,17 +163,14 @@ func (p *YAMLFrontmatterParser) colourToFriendlyName(color string) string {
 }
 
 func (p *YAMLFrontmatterParser) sortHighlightGroups(highlights map[string][]readdeck.Highlight) map[string][]readdeck.Highlight {
-	// Create a new map to store the sorted results
 	sortedHighlights := make(map[string][]readdeck.Highlight)
 
-	// First, process colors that are in the ColorOrder list
 	for _, color := range p.ColorConfig.ColorOrder {
 		if highlightList, ok := highlights[color]; ok {
 			sortedHighlights[color] = highlightList
 		}
 	}
 
-	// Collect remaining colors that weren't in the ColorOrder list
 	var remainingColors []string
 	for color := range highlights {
 		if _, exists := sortedHighlights[color]; !exists {
@@ -155,10 +178,8 @@ func (p *YAMLFrontmatterParser) sortHighlightGroups(highlights map[string][]read
 		}
 	}
 
-	// Sort the remaining colors alphabetically
 	sort.Strings(remainingColors)
 
-	// Add the alphabetically sorted remaining colors
 	for _, color := range remainingColors {
 		sortedHighlights[color] = highlights[color]
 	}
