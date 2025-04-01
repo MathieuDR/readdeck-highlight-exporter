@@ -106,8 +106,11 @@ func (m *mockNoteParser) ParseNote(content []byte, path string) (model.ParsedNot
 	return model.ParsedNote{}, nil
 }
 
-func (m *mockNoteParser) GenerateNoteContent(note model.Note) ([]byte, error) {
-	return nil, nil
+func (m *mockNoteParser) GenerateNoteContent(note model.Note) (NoteOperation, error) {
+	return NoteOperation{
+		Metadata: model.NoteMetadata{ID: "my-id"},
+		Content:  []byte{},
+	}, nil
 }
 
 func TestFileNoteRepository_readNoteFile(t *testing.T) {
