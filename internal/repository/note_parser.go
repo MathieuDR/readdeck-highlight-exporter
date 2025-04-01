@@ -80,7 +80,11 @@ func (p *YAMLFrontmatterParser) ParseNote(content []byte, path string) (model.Pa
 }
 
 func (p *YAMLFrontmatterParser) GenerateNoteContent(note model.Note) (NoteOperation, error) {
-	metadata := p.generateMetadata(note.Bookmark)
+	metadata, err := p.generateMetadata(note.Bookmark, note.Highlights)
+	if err != nil {
+		return NoteOperation{}, err
+	}
+
 	bytes := make([]byte, 0)
 	frontmatter, err := p.generateFrontmatter(metadata)
 
@@ -104,8 +108,8 @@ func (p *YAMLFrontmatterParser) GenerateNoteContent(note model.Note) (NoteOperat
 }
 
 func (p *YAMLFrontmatterParser) highlightTitleBytes(color string) []byte {
-	colour := p.colourToFriendlyName(color)
-	return []byte(fmt.Sprintf("## %s\n", colour))
+	friendlyColor := p.colorToFriendlyName(color)
+	return []byte(fmt.Sprintf("## %s\n", friendlyColor))
 }
 
 func (p *YAMLFrontmatterParser) highlightBodyBytes(highlights []readdeck.Highlight) []byte {
@@ -128,27 +132,38 @@ func (p *YAMLFrontmatterParser) groupHighlightsByColor(highlights []readdeck.Hig
 	return p.sortHighlightGroups(res)
 }
 
-func (p *YAMLFrontmatterParser) generateMetadata(bookmark readdeck.Bookmark) model.NoteMetadata {
-	return model.NoteMetadata{
-		ID:         util.GenerateId(bookmark.Title, time.Now()),
-		Aliases:    []string{fmt.Sprintf("%s highlights", util.Capitalize(bookmark.Title))},
-		Tags:       bookmark.Labels,
-		Created:    bookmark.Created,
-		ReaddeckID: bookmark.ID,
-		Media:      bookmark.Title,
-		Type:       bookmark.Type,
-		Published:  bookmark.Published,
-		ArchiveUrl: bookmark.Href,
-		Site:       bookmark.SiteUrl,
-		Authors:    bookmark.Authors,
+func (p *YAMLFrontmatterParser) generateMetadata(bookmark readdeck.Bookmark, highlights []readdeck.Highlight) (model.NoteMetadata, error) {
+	ids := make([]string, len(highlights))
+	for i, h := range highlights {
+		ids[i] = h.ID
 	}
+
+	hash, err := p.Hasher.Encode(ids)
+	if err != nil {
+		fmt.Errorf("Could not hash highlights: %w", err)
+	}
+
+	return model.NoteMetadata{
+		ID:           util.GenerateId(bookmark.Title, time.Now()),
+		Aliases:      []string{fmt.Sprintf("%s highlights", util.Capitalize(bookmark.Title))},
+		Tags:         bookmark.Labels,
+		Created:      bookmark.Created,
+		ReaddeckID:   bookmark.ID,
+		ReaddeckHash: hash,
+		Media:        bookmark.Title,
+		Type:         bookmark.Type,
+		Published:    bookmark.Published,
+		ArchiveUrl:   bookmark.Href,
+		Site:         bookmark.SiteUrl,
+		Authors:      bookmark.Authors,
+	}, nil
 }
 
 func (p *YAMLFrontmatterParser) generateFrontmatter(metadata model.NoteMetadata) ([]byte, error) {
 	yamlData, err := yaml.Marshal(metadata)
 
 	if err != nil {
-		return nil, fmt.Errorf("Could not format metada: %w", err)
+		return nil, fmt.Errorf("Could not format metadata: %w", err)
 	}
 
 	return yamlData, nil
@@ -168,7 +183,7 @@ func (p *YAMLFrontmatterParser) decodeHighlightIDsHash(hash string) ([]string, e
 	return ids, err
 }
 
-func (p *YAMLFrontmatterParser) colourToFriendlyName(color string) string {
+func (p *YAMLFrontmatterParser) colorToFriendlyName(color string) string {
 	if name, ok := p.ColorConfig.ColorNames[color]; ok {
 		return name
 	}
