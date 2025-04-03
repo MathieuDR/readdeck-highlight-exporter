@@ -140,7 +140,7 @@ func (p *YAMLFrontmatterParser) generateMetadata(bookmark readdeck.Bookmark, hig
 
 	hash, err := p.Hasher.Encode(ids)
 	if err != nil {
-		fmt.Errorf("Could not hash highlights: %w", err)
+		return model.NoteMetadata{}, fmt.Errorf("Could not hash highlights: %w", err)
 	}
 
 	return model.NoteMetadata{
