@@ -113,6 +113,13 @@ func (m *mockNoteParser) GenerateNoteContent(note model.Note) (NoteOperation, er
 	}, nil
 }
 
+func (m *mockNoteParser) UpdateNoteContent(existing model.ParsedNote, note model.Note) (NoteOperation, error) {
+	return NoteOperation{
+		Metadata: model.NoteMetadata{ID: "my-id"},
+		Content:  []byte{},
+	}, nil
+}
+
 func TestFileNoteRepository_readNoteFile(t *testing.T) {
 	tests := []struct {
 		name string // description of this test case

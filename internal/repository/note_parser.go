@@ -18,7 +18,10 @@ import (
 type NoteParser interface {
 	ParseNote(content []byte, path string) (model.ParsedNote, error)
 	GenerateNoteContent(note model.Note) (NoteOperation, error)
+	UpdateNoteContent(existing model.ParsedNote, note model.Note) (NoteOperation, error)
 }
+
+var _ NoteParser = (*YAMLFrontmatterParser)(nil)
 
 type ColorConfig struct {
 	ColorNames map[string]string
@@ -105,6 +108,10 @@ func (p *YAMLFrontmatterParser) GenerateNoteContent(note model.Note) (NoteOperat
 		Metadata: metadata,
 		Content:  bytes,
 	}, nil
+}
+
+func (p *YAMLFrontmatterParser) UpdateNoteContent(existing model.ParsedNote, note model.Note) (NoteOperation, error) {
+	return NoteOperation{}, nil
 }
 
 func (p *YAMLFrontmatterParser) highlightTitleBytes(color string) []byte {

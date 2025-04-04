@@ -150,4 +150,3 @@ func TestGenerateFirstThreeNotes(t *testing.T) {
 
 	t.Log("Test completed successfully!")
 }
-
