@@ -48,8 +48,14 @@ Multiple paragraphs are supported.`),
 					Tags:       []string{"go", "programming"},
 				},
 				HighlightIDs: []string{},
-				Content:      "This is the content of the note.\n\nMultiple paragraphs are supported.",
-				Path:         "/path/to/note.md",
+				Content: []model.Section{
+					{
+						Type:    model.None,
+						Title:   "",
+						Content: "This is the content of the note.\n\nMultiple paragraphs are supported.",
+					},
+				},
+				Path: "/path/to/note.md",
 				RawFrontmatter: map[string]interface{}{
 					"id":          "note123",
 					"created":     "2025-03-26T14:00:00Z",
@@ -99,8 +105,14 @@ Full content here.`, hash)),
 					ReaddeckHash: hash,
 				},
 				HighlightIDs: []string{"h1", "h2"},
-				Content:      "Full content here.",
-				Path:         "/path/to/full.md",
+				Content: []model.Section{
+					{
+						Type:    model.None,
+						Title:   "",
+						Content: "Full content here.",
+					},
+				},
+				Path: "/path/to/full.md",
 				RawFrontmatter: map[string]interface{}{
 					"id":              "full-note",
 					"aliases":         []interface{}{"alias1", "alias2"},
@@ -172,6 +184,35 @@ Content with missing required fields.`),
 			wantErr: true,
 		},
 		{
+			name: "section without header",
+			content: []byte(`---
+id: note123
+created: 2025-03-26T14:00:00Z
+---
+
+abc
+`),
+			path: "/path/to/no-header-content.md",
+			want: model.ParsedNote{
+				Metadata: model.NoteMetadata{
+					ID:      "note123",
+					Created: testTime,
+				},
+				HighlightIDs: []string{},
+				Content: []model.Section{{
+					Type:    model.None,
+					Title:   "",
+					Content: "abc",
+				}},
+				Path: "/path/to/no-header-content.md",
+				RawFrontmatter: map[string]interface{}{
+					"id":      "note123",
+					"created": "2025-03-26T14:00:00Z",
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "empty document after frontmatter",
 			content: []byte(`---
 id: note123
@@ -185,10 +226,109 @@ created: 2025-03-26T14:00:00Z
 					Created: testTime,
 				},
 				HighlightIDs: []string{},
-				Content:      "",
+				Content:      []model.Section{},
 				Path:         "/path/to/empty-content.md",
 				RawFrontmatter: map[string]interface{}{
 					"id":      "note123",
+					"created": "2025-03-26T14:00:00Z",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "content with headers",
+			content: []byte(`---
+id: headers-note
+created: 2025-03-26T14:00:00Z
+---
+# Main title
+Some intro text
+
+## Section 1
+Content for section 1
+
+## Section 2
+Multi-paragraph content
+
+More text here.
+
+# Footer
+Final notes`),
+			path: "/path/to/headers.md",
+			want: model.ParsedNote{
+				Metadata: model.NoteMetadata{
+					ID:      "headers-note",
+					Created: testTime,
+				},
+				HighlightIDs: []string{},
+				Content: []model.Section{
+					{
+						Type:    model.H1,
+						Title:   "Main title",
+						Content: "Some intro text",
+					},
+					{
+						Type:    model.H2,
+						Title:   "Section 1",
+						Content: "Content for section 1",
+					},
+					{
+						Type:    model.H2,
+						Title:   "Section 2",
+						Content: "Multi-paragraph content\n\nMore text here.",
+					},
+					{
+						Type:    model.H1,
+						Title:   "Footer",
+						Content: "Final notes",
+					},
+				},
+				Path: "/path/to/headers.md",
+				RawFrontmatter: map[string]interface{}{
+					"id":      "headers-note",
+					"created": "2025-03-26T14:00:00Z",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "headers without content",
+			content: []byte(`---
+id: empty-sections
+created: 2025-03-26T14:00:00Z
+---
+# Title
+
+## Section 1
+
+## Section 2`),
+			path: "/path/to/empty-sections.md",
+			want: model.ParsedNote{
+				Metadata: model.NoteMetadata{
+					ID:      "empty-sections",
+					Created: testTime,
+				},
+				HighlightIDs: []string{},
+				Content: []model.Section{
+					{
+						Type:    model.H1,
+						Title:   "Title",
+						Content: "",
+					},
+					{
+						Type:    model.H2,
+						Title:   "Section 1",
+						Content: "",
+					},
+					{
+						Type:    model.H2,
+						Title:   "Section 2",
+						Content: "",
+					},
+				},
+				Path: "/path/to/empty-sections.md",
+				RawFrontmatter: map[string]interface{}{
+					"id":      "empty-sections",
 					"created": "2025-03-26T14:00:00Z",
 				},
 			},
@@ -207,7 +347,25 @@ created: 2025-03-26T14:00:00Z
 			}
 
 			require.NoError(t, err, "Unexpected error in test case: %s", tt.name)
-			assert.Equal(t, tt.want, got, "Parsed note should match expected result")
+			assert.Equal(t, tt.want.Metadata, got.Metadata)
+			assert.Equal(t, tt.want.Path, got.Path)
+			assert.Equal(t, tt.want.HighlightIDs, got.HighlightIDs)
+			assert.Equal(t, tt.want.RawFrontmatter, got.RawFrontmatter)
+
+			// Compare sections
+			assert.Equal(t, len(tt.want.Content), len(got.Content),
+				fmt.Sprintf("Number of sections should match, \n %+v", got.Content))
+
+			for i := range tt.want.Content {
+				if i < len(got.Content) {
+					assert.Equal(t, tt.want.Content[i].Type, got.Content[i].Type,
+						"Section %d type should match", i)
+					assert.Equal(t, tt.want.Content[i].Title, got.Content[i].Title,
+						"Section %d title should match", i)
+					assert.Equal(t, tt.want.Content[i].Content, got.Content[i].Content,
+						"Section %d content should match", i)
+				}
+			}
 		})
 	}
 }

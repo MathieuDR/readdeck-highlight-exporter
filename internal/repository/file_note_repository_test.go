@@ -132,24 +132,24 @@ func TestFileNoteRepository_createLookup(t *testing.T) {
 				{
 					Path:     "path1",
 					Metadata: model.NoteMetadata{ID: "id1", ReaddeckID: "readdeck1"},
-					Content:  "content1",
+					Content:  []model.Section{},
 				},
 				{
 					Path:     "path2",
 					Metadata: model.NoteMetadata{ID: "id2", ReaddeckID: "readdeck2"},
-					Content:  "content2",
+					Content:  []model.Section{},
 				},
 			},
 			want: map[string]model.ParsedNote{
 				"readdeck1": {
 					Path:     "path1",
 					Metadata: model.NoteMetadata{ID: "id1", ReaddeckID: "readdeck1"},
-					Content:  "content1",
+					Content:  []model.Section{},
 				},
 				"readdeck2": {
 					Path:     "path2",
 					Metadata: model.NoteMetadata{ID: "id2", ReaddeckID: "readdeck2"},
-					Content:  "content2",
+					Content:  []model.Section{},
 				},
 			},
 		},
@@ -159,19 +159,19 @@ func TestFileNoteRepository_createLookup(t *testing.T) {
 				{
 					Path:     "path1",
 					Metadata: model.NoteMetadata{ID: "id1", ReaddeckID: "readdeck1"},
-					Content:  "content1",
+					Content:  []model.Section{},
 				},
 				{
 					Path:     "path2",
 					Metadata: model.NoteMetadata{ID: "id2", ReaddeckID: ""},
-					Content:  "content2",
+					Content:  []model.Section{},
 				},
 			},
 			want: map[string]model.ParsedNote{
 				"readdeck1": {
 					Path:     "path1",
 					Metadata: model.NoteMetadata{ID: "id1", ReaddeckID: "readdeck1"},
-					Content:  "content1",
+					Content:  []model.Section{},
 				},
 			},
 		},
@@ -190,4 +190,3 @@ func TestFileNoteRepository_createLookup(t *testing.T) {
 		})
 	}
 }
-

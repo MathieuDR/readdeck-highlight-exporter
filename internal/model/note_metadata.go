@@ -23,7 +23,25 @@ type NoteMetadata struct {
 type ParsedNote struct {
 	Path           string
 	Metadata       NoteMetadata
-	Content        string
+	Content        []Section
 	HighlightIDs   []string
 	RawFrontmatter map[string]interface{}
+}
+
+type SectionType string
+
+const (
+	H1   SectionType = "h1"
+	H2   SectionType = "h2"
+	H3   SectionType = "h3"
+	H4   SectionType = "h4"
+	H5   SectionType = "h5"
+	H6   SectionType = "h6"
+	None SectionType = "none"
+)
+
+type Section struct {
+	Type    SectionType
+	Title   string
+	Content string
 }
