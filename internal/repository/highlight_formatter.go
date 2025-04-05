@@ -9,13 +9,11 @@ import (
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/util"
 )
 
-// ColorConfig defines how colors are displayed and ordered
 type ColorConfig struct {
 	ColorNames map[string]string
 	ColorOrder []string
 }
 
-// DefaultColorConfig provides a sensible default configuration
 func DefaultColorConfig() ColorConfig {
 	return ColorConfig{
 		ColorNames: map[string]string{
@@ -28,7 +26,6 @@ func DefaultColorConfig() ColorConfig {
 	}
 }
 
-// HighlightFormatter handles the formatting and organization of highlights
 type HighlightFormatter struct {
 	ColorConfig ColorConfig
 }
@@ -56,14 +53,12 @@ func (f *HighlightFormatter) FormatHighlightsByColor(highlights []readdeck.Highl
 func (f *HighlightFormatter) GetSortedColorOrder(highlights map[string][]readdeck.Highlight) []string {
 	var result []string
 
-	// First add colors in the preferred order
 	for _, color := range f.ColorConfig.ColorOrder {
 		if _, ok := highlights[color]; ok {
 			result = append(result, color)
 		}
 	}
 
-	// Then add any remaining colors alphabetically
 	var remainingColors []string
 	for color := range highlights {
 		if !containsString(result, color) {
