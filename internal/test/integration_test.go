@@ -38,7 +38,7 @@ func findProjectRoot() (string, error) {
 // TestGenerateFirstThreeNotes is a one-time integration test to validate the export flow
 func TestGenerateFirstThreeNotes(t *testing.T) {
 	if os.Getenv("RUN_INTEGRATION_TEST") != "true" {
-		t.Skip("Skipping integration test. Set RUN_INTEGRATION_TEST=true to run")
+		t.Skip("Skipping integration test. Set `export RUN_INTEGRATION_TEST=true` to run")
 	}
 
 	// Get credentials from environment
@@ -103,11 +103,15 @@ func TestGenerateFirstThreeNotes(t *testing.T) {
 	}
 
 	// Setup repository with absolute path
-	parser := repository.NewYAMLFrontmatterParser()
+	formatter := repository.NewHighlightFormatter(repository.DefaultColorConfig())
+	parser := repository.NewYAMLNoteParser()
+	generator := repository.NewYAMLNoteGenerator(formatter)
+	updater := repository.NewYAMLNoteUpdater(generator, parser)
+	noteService := repository.NewCustomNoteService(parser, generator, updater)
 	noteRepo := repository.NewFileNoteRepository(
 		projectRoot,
 		"test_artifacts",
-		parser,
+		noteService,
 	)
 
 	// Manually get bookmark details and construct notes
