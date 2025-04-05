@@ -3,10 +3,12 @@ package repository
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/adrg/frontmatter"
 	"github.com/go-playground/validator/v10"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/util"
+	"gopkg.in/yaml.v2"
 )
 
 // NoteParser is responsible for parsing notes from raw content
@@ -27,31 +29,37 @@ func NewYAMLNoteParser() *YAMLNoteParser {
 }
 
 func (p *YAMLNoteParser) ParseNote(content []byte, path string) (model.ParsedNote, error) {
+	// Parse into a map once
 	var rawMap map[string]interface{}
 	textContent, err := frontmatter.Parse(bytes.NewReader(content), &rawMap)
 	if err != nil {
 		return model.ParsedNote{}, fmt.Errorf("could not parse frontmatter: %w", err)
 	}
 
-	var matter model.NoteMetadata
-	contentCopy := bytes.NewReader(content)
-	_, err = frontmatter.Parse(contentCopy, &matter)
+	// Convert to struct using existing yaml package
+	yamlBytes, err := yaml.Marshal(rawMap)
 	if err != nil {
-		return model.ParsedNote{}, fmt.Errorf("could not parse frontmatter into struct: %w", err)
+		return model.ParsedNote{}, fmt.Errorf("could not remarshal frontmatter: %w", err)
 	}
 
-	if err := p.Validator.Struct(&matter); err != nil {
+	var metadata model.NoteMetadata
+	if err := yaml.Unmarshal(yamlBytes, &metadata); err != nil {
+		return model.ParsedNote{}, fmt.Errorf("could not unmarshal to struct: %w", err)
+	}
+
+	// Rest of your validation logic...
+	if err := p.Validator.Struct(&metadata); err != nil {
 		return model.ParsedNote{}, fmt.Errorf("frontmatter is invalid: %w", err)
 	}
 
-	highlightIDs, err := p.decodeHighlightIDsHash(matter.ReaddeckHash)
+	highlightIDs, err := p.decodeHighlightIDsHash(metadata.ReaddeckHash)
 	if err != nil {
 		return model.ParsedNote{}, err
 	}
 
 	return model.ParsedNote{
 		Path:           path,
-		Metadata:       matter,
+		Metadata:       metadata,
 		Content:        string(textContent),
 		HighlightIDs:   highlightIDs,
 		RawFrontmatter: rawMap,
