@@ -27,16 +27,20 @@ func NewYAMLNoteParser() *YAMLNoteParser {
 }
 
 func (p *YAMLNoteParser) ParseNote(content []byte, path string) (model.ParsedNote, error) {
-	var matter model.NoteMetadata
-	textContent, err := frontmatter.MustParse(bytes.NewReader(content), &matter)
-
+	var rawMap map[string]interface{}
+	textContent, err := frontmatter.Parse(bytes.NewReader(content), &rawMap)
 	if err != nil {
 		return model.ParsedNote{}, fmt.Errorf("could not parse frontmatter: %w", err)
 	}
 
-	err = p.Validator.Struct(&matter)
-
+	var matter model.NoteMetadata
+	contentCopy := bytes.NewReader(content)
+	_, err = frontmatter.Parse(contentCopy, &matter)
 	if err != nil {
+		return model.ParsedNote{}, fmt.Errorf("could not parse frontmatter into struct: %w", err)
+	}
+
+	if err := p.Validator.Struct(&matter); err != nil {
 		return model.ParsedNote{}, fmt.Errorf("frontmatter is invalid: %w", err)
 	}
 
@@ -46,10 +50,11 @@ func (p *YAMLNoteParser) ParseNote(content []byte, path string) (model.ParsedNot
 	}
 
 	return model.ParsedNote{
-		Path:         path,
-		Metadata:     matter,
-		Content:      string(textContent),
-		HighlightIDs: highlightIDs,
+		Path:           path,
+		Metadata:       matter,
+		Content:        string(textContent),
+		HighlightIDs:   highlightIDs,
+		RawFrontmatter: rawMap,
 	}, nil
 }
 
@@ -66,4 +71,3 @@ func (p *YAMLNoteParser) decodeHighlightIDsHash(hash string) ([]string, error) {
 
 	return ids, nil
 }
-

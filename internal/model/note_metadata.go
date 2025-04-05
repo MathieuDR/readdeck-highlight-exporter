@@ -21,8 +21,9 @@ type NoteMetadata struct {
 }
 
 type ParsedNote struct {
-	Path         string
-	Metadata     NoteMetadata
-	Content      string
-	HighlightIDs []string
+	Path           string
+	Metadata       NoteMetadata
+	Content        string
+	HighlightIDs   []string
+	RawFrontmatter map[string]interface{}
 }
