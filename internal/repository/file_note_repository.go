@@ -15,14 +15,14 @@ import (
 type FileNoteRepository struct {
 	basePath    string
 	fleetingDir string
-	parser      NoteParser
+	noteService NoteService
 }
 
-func NewFileNoteRepository(basePath, fleetingDir string, parser NoteParser) *FileNoteRepository {
+func NewFileNoteRepository(basePath, fleetingDir string, noteService NoteService) *FileNoteRepository {
 	return &FileNoteRepository{
 		basePath:    basePath,
 		fleetingDir: fleetingDir,
-		parser:      parser,
+		noteService: noteService,
 	}
 }
 
@@ -34,7 +34,7 @@ func (f *FileNoteRepository) UpsertAll(ctx context.Context, notes []model.Note) 
 	notePaths, err := f.findNotesInDirectory(f.getFleetingNotesPath())
 
 	if err != nil {
-		return nil, fmt.Errorf("Could not find note paths: %w", err)
+		return nil, fmt.Errorf("could not find note paths: %w", err)
 	}
 
 	parsedNotes, err := f.readNoteFiles(notePaths)
@@ -65,7 +65,7 @@ func (f *FileNoteRepository) processNote(note model.Note, lookup map[string]mode
 	if exists {
 		updatedNote, err := f.updateNote(existingNote, note)
 		if err != nil {
-			return model.Note{}, fmt.Errorf("Could not update note %s (%s): %w",
+			return model.Note{}, fmt.Errorf("could not update note %s (%s): %w",
 				bookmarkID, existingNote.Path, err)
 		}
 		return updatedNote, nil
@@ -73,59 +73,66 @@ func (f *FileNoteRepository) processNote(note model.Note, lookup map[string]mode
 
 	newNote, err := f.createNote(note)
 	if err != nil {
-		return model.Note{}, fmt.Errorf("Could not create note %s: %w",
+		return model.Note{}, fmt.Errorf("could not create note %s: %w",
 			bookmarkID, err)
 	}
 	return newNote, nil
 }
 
-func (f *FileNoteRepository) updateNote(existingNote model.ParsedNote, request model.Note) (model.Note, error) {
-	op, err := f.parser.UpdateNoteContent(existingNote, request)
+func (f *FileNoteRepository) updateNote(existingNote model.ParsedNote, note model.Note) (model.Note, error) {
+	op, err := f.noteService.UpdateNoteContent(existingNote, note)
 
 	if err != nil {
-		return model.Note{}, fmt.Errorf("Could not generate bytes for update: %w", err)
+		return model.Note{}, fmt.Errorf("could not generate bytes for update: %w", err)
 	}
-	request.Path = existingNote.Path
+
+	// TODO: Make immutable
+	result := note
+	result.Path = existingNote.Path
+
 	err = f.writeBytes(op.Content, existingNote.Path)
 	if err != nil {
 		return model.Note{}, err
 	}
 
-	return request, nil
+	return result, nil
 }
 
-// TODO: Make request a copy, so it's immutable
-func (f *FileNoteRepository) createNote(request model.Note) (model.Note, error) {
-	operation, err := f.parser.GenerateNoteContent(request)
+func (f *FileNoteRepository) createNote(note model.Note) (model.Note, error) {
+	operation, err := f.noteService.GenerateNoteContent(note)
 	if err != nil {
-		return model.Note{}, fmt.Errorf("Could not generate bytes for creation: %w", err)
+		return model.Note{}, fmt.Errorf("could not generate bytes for creation: %w", err)
 	}
 
-	path := fmt.Sprintf("%s/%s.md", f.getFleetingNotesPath(), operation.Metadata.ID)
-	request.Path = path
-	err = f.writeBytes(operation.Content, path)
+	// TODO: Make immutable
+	result := note
 
+	notePath := fmt.Sprintf("%s/%s.md", f.getFleetingNotesPath(), operation.Metadata.ID)
+	result.Path = notePath
+
+	err = f.writeBytes(operation.Content, notePath)
 	if err != nil {
 		return model.Note{}, err
 	}
 
-	return request, nil
+	return result, nil
 }
 
 func (f *FileNoteRepository) writeBytes(bytes []byte, path string) error {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("cannot create directory for %s: %w", path, err)
+	}
+
 	file, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	if err != nil {
-		return fmt.Errorf("Can not open file %s: %w", path, err)
+		return fmt.Errorf("cannot open file %s: %w", path, err)
 	}
+	defer file.Close()
 
 	_, err = file.Write(bytes)
-
 	if err != nil {
-		return fmt.Errorf("Can not write file %s: %w", path, err)
-	}
-
-	if err := file.Close(); err != nil {
-		return fmt.Errorf("Can not close file %s: %w", path, err)
+		return fmt.Errorf("cannot write file %s: %w", path, err)
 	}
 
 	return nil
@@ -134,7 +141,7 @@ func (f *FileNoteRepository) writeBytes(bytes []byte, path string) error {
 func (f *FileNoteRepository) createLookup(parsedNotes []model.ParsedNote) map[string]model.ParsedNote {
 	lookup := make(map[string]model.ParsedNote, len(parsedNotes))
 	for _, p := range parsedNotes {
-		if p.Metadata.ID != "" {
+		if p.Metadata.ReaddeckID != "" {
 			lookup[p.Metadata.ReaddeckID] = p
 		}
 	}
@@ -194,7 +201,7 @@ func (f *FileNoteRepository) readNoteFile(filePath string) (model.ParsedNote, er
 		return model.ParsedNote{}, fmt.Errorf("failed to read file %s: %w", filePath, err)
 	}
 
-	parsedNote, err := f.parser.ParseNote(content, filePath)
+	parsedNote, err := f.noteService.ParseNote(content, filePath)
 	if err != nil {
 		return model.ParsedNote{}, fmt.Errorf("failed to parse note at %s: %w", filePath, err)
 	}

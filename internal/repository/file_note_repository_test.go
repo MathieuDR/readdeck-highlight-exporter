@@ -33,7 +33,7 @@ func TestFileNoteRepository_findNotesInDirectory(t *testing.T) {
 		filepath.Join(tempDir, "notes/.hidden.md"):         false, // Should be ignored
 	}
 
-	for path, _ := range testFiles {
+	for path := range testFiles {
 		err := os.WriteFile(path, []byte("test content"), 0644)
 		require.NoError(t, err)
 	}
@@ -120,37 +120,74 @@ func (m *mockNoteParser) UpdateNoteContent(existing model.ParsedNote, note model
 	}, nil
 }
 
-func TestFileNoteRepository_readNoteFile(t *testing.T) {
+func TestFileNoteRepository_createLookup(t *testing.T) {
 	tests := []struct {
-		name string // description of this test case
-		// Named input parameters for receiver constructor.
-		basePath    string
-		fleetingDir string
-		parser      NoteParser
-		// Named input parameters for target function.
-		filePath string
-		want     model.ParsedNote
-		wantErr  bool
+		name        string
+		parsedNotes []model.ParsedNote
+		want        map[string]model.ParsedNote
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Create lookup from parsed notes with ReaddeckID",
+			parsedNotes: []model.ParsedNote{
+				{
+					Path:     "path1",
+					Metadata: model.NoteMetadata{ID: "id1", ReaddeckID: "readdeck1"},
+					Content:  "content1",
+				},
+				{
+					Path:     "path2",
+					Metadata: model.NoteMetadata{ID: "id2", ReaddeckID: "readdeck2"},
+					Content:  "content2",
+				},
+			},
+			want: map[string]model.ParsedNote{
+				"readdeck1": {
+					Path:     "path1",
+					Metadata: model.NoteMetadata{ID: "id1", ReaddeckID: "readdeck1"},
+					Content:  "content1",
+				},
+				"readdeck2": {
+					Path:     "path2",
+					Metadata: model.NoteMetadata{ID: "id2", ReaddeckID: "readdeck2"},
+					Content:  "content2",
+				},
+			},
+		},
+		{
+			name: "Notes without ReaddeckID are not included in lookup",
+			parsedNotes: []model.ParsedNote{
+				{
+					Path:     "path1",
+					Metadata: model.NoteMetadata{ID: "id1", ReaddeckID: "readdeck1"},
+					Content:  "content1",
+				},
+				{
+					Path:     "path2",
+					Metadata: model.NoteMetadata{ID: "id2", ReaddeckID: ""},
+					Content:  "content2",
+				},
+			},
+			want: map[string]model.ParsedNote{
+				"readdeck1": {
+					Path:     "path1",
+					Metadata: model.NoteMetadata{ID: "id1", ReaddeckID: "readdeck1"},
+					Content:  "content1",
+				},
+			},
+		},
+		{
+			name:        "Empty input returns empty map",
+			parsedNotes: []model.ParsedNote{},
+			want:        map[string]model.ParsedNote{},
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := NewFileNoteRepository(tt.basePath, tt.fleetingDir, tt.parser)
-			got, gotErr := f.readNoteFile(tt.filePath)
-			if gotErr != nil {
-				if !tt.wantErr {
-					t.Errorf("readNoteFile() failed: %v", gotErr)
-				}
-				return
-			}
-			if tt.wantErr {
-				t.Fatal("readNoteFile() succeeded unexpectedly")
-			}
-			// TODO: update the condition below to compare got with tt.want.
-			if true {
-				t.Errorf("readNoteFile() = %v, want %v", got, tt.want)
-			}
+			f := NewFileNoteRepository("", "", nil)
+			got := f.createLookup(tt.parsedNotes)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
+

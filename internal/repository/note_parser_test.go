@@ -174,7 +174,7 @@ created: 2025-03-26T14:00:00Z
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := repository.NewYAMLFrontmatterParser()
+			p := repository.NewYAMLNoteParser()
 			got, err := p.ParseNote(tt.content, tt.path)
 
 			if tt.wantErr {
@@ -187,4 +187,3 @@ created: 2025-03-26T14:00:00Z
 		})
 	}
 }
-
