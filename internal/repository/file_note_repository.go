@@ -152,10 +152,6 @@ func (f *FileNoteRepository) createLookup(parsedNotes []model.ParsedNote) map[st
 // context of the FileNoteRepository and thus should be part of that domain
 // Another VALID approach would to put this under a util package
 func (f *FileNoteRepository) findNotesInDirectory(dirPath string) ([]string, error) {
-	if err := os.MkdirAll(dirPath, 0755); err != nil {
-		return nil, fmt.Errorf("cannot create directory %s: %w", dirPath, err)
-	}
-
 	notePaths := make([]string, 0)
 
 	err := filepath.WalkDir(dirPath, func(path string, d fs.DirEntry, err error) error {
@@ -212,4 +208,3 @@ func (f *FileNoteRepository) readNoteFile(filePath string) (model.ParsedNote, er
 
 	return parsedNote, nil
 }
-
