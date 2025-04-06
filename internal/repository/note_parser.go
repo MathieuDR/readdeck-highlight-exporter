@@ -13,7 +13,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// NoteParser is responsible for parsing notes from raw content
 type NoteParser interface {
 	ParseNote(content []byte, path string) (model.ParsedNote, error)
 }
@@ -33,14 +32,14 @@ func NewYAMLNoteParser() *YAMLNoteParser {
 }
 
 func (p *YAMLNoteParser) ParseNote(content []byte, path string) (model.ParsedNote, error) {
-	// Parse into a map once
+	// We first parse the frontmatter to a map, so we keep the dynamic / unknown content
+	// Then we parse the map into yaml and the yaml to struct. It all happens in memory
 	var rawMap map[string]interface{}
 	textContent, err := frontmatter.Parse(bytes.NewReader(content), &rawMap)
 	if err != nil {
 		return model.ParsedNote{}, fmt.Errorf("could not parse frontmatter: %w", err)
 	}
 
-	// Convert to struct using existing yaml package
 	yamlBytes, err := yaml.Marshal(rawMap)
 	if err != nil {
 		return model.ParsedNote{}, fmt.Errorf("could not remarshal frontmatter: %w", err)
@@ -115,11 +114,9 @@ func (p *YAMLNoteParser) ParseContent(input string) []model.Section {
 		Title: "",
 	}
 
-	// Track if we're inside a code block
 	inCodeBlock := false
 
 	for _, line := range lines {
-		// Check for code block delimiters
 		if strings.HasPrefix(strings.TrimSpace(line), "```") {
 			inCodeBlock = !inCodeBlock
 			contentBuffer.WriteString(line)
