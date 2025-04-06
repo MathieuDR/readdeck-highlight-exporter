@@ -53,7 +53,15 @@ func (c HttpClient) GetHighlights(ctx context.Context) ([]Highlight, error) {
 		highlights = append(highlights, call.Highlights...)
 	}
 
-	return highlights, nil
+	return c.reverseList(highlights), nil
+}
+
+func (c HttpClient) reverseList(list []Highlight) []Highlight {
+	result := make([]Highlight, len(list))
+	for i, j := 0, len(list)-1; j >= 0; i, j = i+1, j-1 {
+		result[i] = list[j]
+	}
+	return result
 }
 
 func (c HttpClient) doHighlightCall(ctx context.Context, limit int, offset int) (highlightsCall, error) {

@@ -1,8 +1,9 @@
 package repository
 
 import (
+	"bytes"
 	"fmt"
-	"os"
+	"strings"
 
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/readdeck"
@@ -36,22 +37,13 @@ func (u *YAMLNoteUpdater) UpdateNoteContent(existing model.ParsedNote, note mode
 	content = append(content, frontmatter...)
 
 	highlights := u.getHighlights(existing.HighlightIDs, note.Highlights)
-	bodyBytes, err := u.appendHighlightsToSections(existing.Content, highlights)
-
-	if err != nil {
-		return NoteOperation{}, fmt.Errorf("Could not generate body: %w", err)
-	}
-
+	bodyBytes := u.appendHighlightsToSections(existing.Content, highlights)
 	content = append(content, bodyBytes...)
 
 	return NoteOperation{
 		Metadata: metadata,
 		Content:  content,
 	}, nil
-}
-
-func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, highlights []readdeck.Highlight) ([]byte, error) {
-	return nil, nil
 }
 
 func (u *YAMLNoteUpdater) updateMetadata(existing model.NoteMetadata, bookmark readdeck.Bookmark, highlights []readdeck.Highlight) (model.NoteMetadata, error) {
@@ -99,6 +91,98 @@ func (u *YAMLNoteUpdater) updateFrontmatter(existing map[string]interface{}, met
 	}
 
 	return []byte(fmt.Sprintf("---\n%s---\n", frontmatterBytes)), nil
+}
+
+func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, highlights []readdeck.Highlight) []byte {
+	var buffer bytes.Buffer
+
+	if len(highlights) == 0 {
+		for _, section := range sections {
+			writeSection(&buffer, section)
+		}
+		return buffer.Bytes()
+	}
+
+	// Reuse the formatter's grouping and ordering logic to ensure consistent
+	// presentation between new notes and updated notes
+	highlightGroups := u.Generator.HighlightFormatter.groupHighlightsByColor(highlights)
+	colorOrder := u.Generator.HighlightFormatter.GetSortedColorOrder(highlightGroups)
+	formattedByColor := u.Generator.HighlightFormatter.FormatHighlightsByColor(highlights)
+
+	// Track which highlight groups have been handled so we know which ones
+	// need new sections at the end of the document
+	processedColors := make(map[string]bool)
+
+	for _, section := range sections {
+		writeSection(&buffer, section)
+
+		if section.Type == model.H2 {
+			for color, formatted := range formattedByColor {
+				friendlyName := u.Generator.HighlightFormatter.colorToFriendlyName(color)
+
+				if friendlyName == section.Title && len(highlightGroups[color]) > 0 {
+					if section.Content != "" {
+						buffer.WriteString("\n\n")
+					}
+
+					// When appending to existing sections, we only want the highlights
+					// without the section header which is already present
+					parts := bytes.SplitN(formatted, []byte("\n\n"), 2)
+					if len(parts) > 1 {
+						buffer.Write(parts[1])
+					}
+
+					processedColors[color] = true
+					break
+				}
+			}
+		}
+
+		buffer.WriteString("\n\n")
+	}
+
+	// For highlight colors without matching sections, add them as new sections
+	// at the end of the document in the proper order
+	for _, color := range colorOrder {
+		if !processedColors[color] && len(highlightGroups[color]) > 0 {
+			buffer.Write(formattedByColor[color])
+			buffer.WriteString("\n\n")
+		}
+	}
+
+	return buffer.Bytes()
+}
+
+// writeSection handles writing a section's header and content to the buffer
+// based on its heading type, properly formatting headers with the correct
+// number of hash symbols
+func writeSection(buffer *bytes.Buffer, section model.Section) {
+	if section.Type != model.None {
+		level := 0
+		switch section.Type {
+		case model.H1:
+			level = 1
+		case model.H2:
+			level = 2
+		case model.H3:
+			level = 3
+		case model.H4:
+			level = 4
+		case model.H5:
+			level = 5
+		case model.H6:
+			level = 6
+		}
+
+		buffer.WriteString(strings.Repeat("#", level))
+		buffer.WriteString(" ")
+		buffer.WriteString(section.Title)
+		buffer.WriteString("\n")
+	}
+
+	if section.Content != "" {
+		buffer.WriteString(strings.TrimSpace(section.Content))
+	}
 }
 
 func (u *YAMLNoteUpdater) getHighlights(existingIds []string, highlights []readdeck.Highlight) []readdeck.Highlight {
