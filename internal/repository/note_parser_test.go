@@ -236,6 +236,67 @@ created: 2025-03-26T14:00:00Z
 			wantErr: false,
 		},
 		{
+			name: "codeblock are not headers",
+			content: []byte(`---
+id: headers-note
+created: 2025-03-26T14:00:00Z
+---
+# Main title
+Some intro text
+
+## Section 1
+Content for section 1
+
+` + "```" + `
+# My comment
+defp some_func(a, b), do: a + b
+` + "```" + `
+
+## Section 2
+Multi-paragraph content
+
+More text here.
+
+# Footer
+Final notes`),
+			path: "/path/to/headers.md",
+			want: model.ParsedNote{
+				Metadata: model.NoteMetadata{
+					ID:      "headers-note",
+					Created: testTime,
+				},
+				HighlightIDs: []string{},
+				Content: []model.Section{
+					{
+						Type:    model.H1,
+						Title:   "Main title",
+						Content: "Some intro text",
+					},
+					{
+						Type:    model.H2,
+						Title:   "Section 1",
+						Content: "Content for section 1\n\n```\n# My comment\ndefp some_func(a, b), do: a + b\n```",
+					},
+					{
+						Type:    model.H2,
+						Title:   "Section 2",
+						Content: "Multi-paragraph content\n\nMore text here.",
+					},
+					{
+						Type:    model.H1,
+						Title:   "Footer",
+						Content: "Final notes",
+					},
+				},
+				Path: "/path/to/headers.md",
+				RawFrontmatter: map[string]interface{}{
+					"id":      "headers-note",
+					"created": "2025-03-26T14:00:00Z",
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "content with headers",
 			content: []byte(`---
 id: headers-note

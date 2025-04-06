@@ -62,10 +62,7 @@ func (p *YAMLNoteParser) ParseNote(content []byte, path string) (model.ParsedNot
 	}
 
 	// Parse the content into sections
-	sections, err := p.ParseContent(string(textContent))
-	if err != nil {
-		return model.ParsedNote{}, fmt.Errorf("could not parse content sections: %w", err)
-	}
+	sections := p.ParseContent(string(textContent))
 
 	return model.ParsedNote{
 		Path:           path,
@@ -109,42 +106,56 @@ func (p *YAMLNoteParser) headingTypeFromLevel(level int) model.SectionType {
 	}
 }
 
-func (p *YAMLNoteParser) ParseContent(input string) ([]model.Section, error) {
+func (p *YAMLNoteParser) ParseContent(input string) []model.Section {
 	var sections []model.Section
-
 	lines := strings.Split(input, "\n")
-
 	var contentBuffer bytes.Buffer
 	currentSection := model.Section{
 		Type:  model.None,
 		Title: "",
 	}
 
+	// Track if we're inside a code block
+	inCodeBlock := false
+
 	for _, line := range lines {
-		matches := p.headingRegex.FindStringSubmatch(line)
-
-		if len(matches) > 0 {
-			// Found a heading - store any accumulated content in the current section
-			// Only store content if there's actual content or if it's a heading section
-			content := strings.TrimSpace(contentBuffer.String())
-			if content != "" || currentSection.Type != model.None {
-				currentSection.Content = content
-				sections = append(sections, currentSection)
-				contentBuffer.Reset()
-			}
-
-			// New heading
-			headingLevel := len(matches[1])
-			title := strings.TrimSpace(matches[2])
-
-			currentSection = model.Section{
-				Type:  p.headingTypeFromLevel(headingLevel),
-				Title: title,
-			}
-		} else {
+		// Check for code block delimiters
+		if strings.HasPrefix(strings.TrimSpace(line), "```") {
+			inCodeBlock = !inCodeBlock
 			contentBuffer.WriteString(line)
 			contentBuffer.WriteString("\n")
+			continue
 		}
+
+		// Only process as a heading if not in a code block
+		if !inCodeBlock {
+			matches := p.headingRegex.FindStringSubmatch(line)
+
+			if len(matches) > 0 {
+				// Found a heading - store any accumulated content in the current section
+				// Only store content if there's actual content or if it's a heading section
+				content := strings.TrimSpace(contentBuffer.String())
+				if content != "" || currentSection.Type != model.None {
+					currentSection.Content = content
+					sections = append(sections, currentSection)
+					contentBuffer.Reset()
+				}
+
+				// New heading
+				headingLevel := len(matches[1])
+				title := strings.TrimSpace(matches[2])
+
+				currentSection = model.Section{
+					Type:  p.headingTypeFromLevel(headingLevel),
+					Title: title,
+				}
+				continue
+			}
+		}
+
+		// Default case - add line to current content
+		contentBuffer.WriteString(line)
+		contentBuffer.WriteString("\n")
 	}
 
 	// Last section
@@ -154,5 +165,5 @@ func (p *YAMLNoteParser) ParseContent(input string) ([]model.Section, error) {
 		sections = append(sections, currentSection)
 	}
 
-	return sections, nil
+	return sections
 }
