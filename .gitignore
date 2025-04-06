@@ -28,6 +28,7 @@ go.work.sum
 .nix/
 result
 result-*
+bin/
 
 readdeck-highlight-exporter
 test_artifacts/
