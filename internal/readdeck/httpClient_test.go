@@ -19,7 +19,7 @@ func TestGetHighlightsIntegration(t *testing.T) {
 	url := os.Getenv("BASE_URL")
 	token := os.Getenv("AUTH_TOKEN")
 
-	client := NewHttpClient(http.Client{}, url, token)
+	client := NewHttpClient(http.Client{}, url, token, 100)
 	highlights, err := client.GetHighlights(ctx)
 
 	if err != nil {
@@ -46,7 +46,7 @@ func TestBookmarkIntegration(t *testing.T) {
 	url := os.Getenv("BASE_URL")
 	token := os.Getenv("AUTH_TOKEN")
 
-	client := NewHttpClient(http.Client{}, url, token)
+	client := NewHttpClient(http.Client{}, url, token, 100)
 	id := "DUvg9NZ93QP9pRbuzHVuyd"
 	bookmark, err := client.GetBookmark(ctx, id)
 

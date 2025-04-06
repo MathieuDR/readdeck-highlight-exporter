@@ -11,9 +11,10 @@ import (
 )
 
 type HttpClient struct {
-	client  http.Client
-	baseUrl string
-	token   string
+	client   http.Client
+	baseUrl  string
+	token    string
+	pageSize int
 }
 
 // LEARNING
@@ -27,23 +28,30 @@ type highlightsCall struct {
 	TotalPages  int
 }
 
-func NewHttpClient(client http.Client, baseUrl, authToken string) *HttpClient {
+func NewHttpClient(client http.Client, baseUrl, authToken string, pagesize int) *HttpClient {
+	if pagesize < 10 {
+		pagesize = 10
+	}
+
+	if pagesize > 100 {
+		pagesize = 100
+	}
+
 	return &HttpClient{
-		client:  client,
-		baseUrl: baseUrl,
-		token:   authToken,
+		client:   client,
+		baseUrl:  baseUrl,
+		token:    authToken,
+		pageSize: pagesize,
 	}
 }
-
-const PageSize = 100
 
 func (c HttpClient) GetHighlights(ctx context.Context) ([]Highlight, error) {
 	var highlights []Highlight
 	totalPages := 1
 	for i := 0; i < totalPages; i++ {
-		log.Printf("Requesting page %d, offset: %d", (i + 1), i*PageSize)
+		log.Printf("Requesting page %d, offset: %d", (i + 1), i*c.pageSize)
 
-		call, err := c.doHighlightCall(ctx, PageSize, i*PageSize)
+		call, err := c.doHighlightCall(ctx, c.pageSize, i*c.pageSize)
 
 		if err != nil {
 			return nil, fmt.Errorf("Error while fetching highlights: %w", err)

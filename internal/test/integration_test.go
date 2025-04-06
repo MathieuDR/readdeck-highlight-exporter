@@ -67,7 +67,7 @@ func TestGenerateFirstThreeNotes(t *testing.T) {
 	httpClient := http.Client{
 		Timeout: 30 * time.Second,
 	}
-	readdeckClient := readdeck.NewHttpClient(httpClient, baseURL, token)
+	readdeckClient := readdeck.NewHttpClient(httpClient, baseURL, token, 100)
 
 	// Get highlights
 	ctx := context.Background()
