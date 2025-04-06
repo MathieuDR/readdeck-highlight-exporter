@@ -105,7 +105,7 @@ Examples:
 		}
 
 		// Create config directory if it doesn't exist
-		configDir := config.ConfigPath(config.XDGDir{})
+		configDir := config.ConfigHome()
 		if err := os.MkdirAll(configDir, 0755); err != nil {
 			return fmt.Errorf("failed to create config directory: %w", err)
 		}
@@ -160,4 +160,3 @@ func GetConfig() (config.Settings, error) {
 
 	return settings, nil
 }
-

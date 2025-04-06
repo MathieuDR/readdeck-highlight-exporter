@@ -53,7 +53,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find the standard config location.
-		configDir := config.ConfigPath(config.XDGDir{})
+		configDir := config.ConfigHome()
 
 		viper.AddConfigPath(configDir)
 		viper.SetConfigType("yaml")
