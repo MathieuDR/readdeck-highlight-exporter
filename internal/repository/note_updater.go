@@ -107,17 +107,20 @@ func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, h
 	// presentation between new notes and updated notes
 	highlightGroups := u.Generator.HighlightFormatter.groupHighlightsByColor(highlights)
 	colorOrder := u.Generator.HighlightFormatter.GetSortedColorOrder(highlightGroups)
-	formattedByColor := u.Generator.HighlightFormatter.FormatHighlightsByColor(highlights)
+	highlightBodies := make(map[string][]byte)
+	for color, hs := range highlightGroups {
+		highlightBodies[color] = u.Generator.HighlightFormatter.highlightBodyBytes(hs)
+	}
 
 	// Track which highlight groups have been handled so we know which ones
 	// need new sections at the end of the document
 	processedColors := make(map[string]bool)
 
-	for i, section := range sections {
+	for _, section := range sections {
 		writeSection(&buffer, section)
 
 		if section.Type == model.H2 {
-			for color, formatted := range formattedByColor {
+			for color := range highlightGroups {
 				friendlyName := u.Generator.HighlightFormatter.colorToFriendlyName(color)
 
 				if friendlyName == section.Title && len(highlightGroups[color]) > 0 {
@@ -125,21 +128,13 @@ func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, h
 						buffer.WriteString("\n\n")
 					}
 
-					// When appending to existing sections, we only want the highlights
-					// without the section header which is already present
-					parts := bytes.SplitN(formatted, []byte("\n\n"), 2)
-					if len(parts) > 1 {
-						buffer.Write(parts[1])
-					}
-
+					// Use the highlight bodies directly instead of trying to extract them
+					buffer.Write(highlightBodies[color])
 					processedColors[color] = true
 					break
 				}
 			}
-		}
 
-		if i < len(sections)-1 {
-			buffer.WriteString("\n\n")
 		}
 	}
 
@@ -150,7 +145,9 @@ func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, h
 			if buffer.Len() > 0 {
 				buffer.WriteString("\n\n")
 			}
-			buffer.Write(formattedByColor[color])
+			title := u.Generator.HighlightFormatter.highlightTitleBytes(color)
+			buffer.Write(title)
+			buffer.Write(highlightBodies[color])
 		}
 	}
 
@@ -184,8 +181,10 @@ func writeSection(buffer *bytes.Buffer, section model.Section) {
 		buffer.WriteString("\n")
 	}
 
-	if section.Content != "" {
-		buffer.WriteString(strings.TrimSpace(section.Content))
+	// content := strings.TrimSpace(section.Content)
+	content := section.Content
+	if content != "" {
+		buffer.WriteString(content)
 	}
 }
 
