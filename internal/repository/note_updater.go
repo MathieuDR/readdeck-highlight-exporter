@@ -124,10 +124,6 @@ func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, h
 				friendlyName := u.Generator.HighlightFormatter.colorToFriendlyName(color)
 
 				if friendlyName == section.Title && len(highlightGroups[color]) > 0 {
-					if section.Content != "" {
-						buffer.WriteString("\n\n")
-					}
-
 					// Use the highlight bodies directly instead of trying to extract them
 					buffer.Write(highlightBodies[color])
 					processedColors[color] = true
@@ -181,10 +177,8 @@ func writeSection(buffer *bytes.Buffer, section model.Section) {
 		buffer.WriteString("\n")
 	}
 
-	// content := strings.TrimSpace(section.Content)
-	content := section.Content
-	if content != "" {
-		buffer.WriteString(content)
+	if section.Content != "" {
+		buffer.WriteString(section.Content)
 	}
 }
 

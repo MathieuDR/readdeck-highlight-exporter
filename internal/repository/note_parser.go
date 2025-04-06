@@ -131,7 +131,7 @@ func (p *YAMLNoteParser) ParseContent(input string) []model.Section {
 			if len(matches) > 0 {
 				// Found a heading - store any accumulated content in the current section
 				// Only store content if there's actual content or if it's a heading section
-				content := strings.TrimSpace(contentBuffer.String())
+				content := contentBuffer.String()
 				if content != "" || currentSection.Type != model.None {
 					currentSection.Content = content
 					sections = append(sections, currentSection)
