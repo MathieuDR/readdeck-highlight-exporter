@@ -35,7 +35,7 @@ func NewHttpClient(client http.Client, baseUrl, authToken string) *HttpClient {
 	}
 }
 
-const PageSize = 2
+const PageSize = 100
 
 func (c HttpClient) GetHighlights(ctx context.Context) ([]Highlight, error) {
 	var highlights []Highlight
