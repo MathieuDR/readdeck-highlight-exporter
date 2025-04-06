@@ -25,7 +25,7 @@ func (m *MockNoteRepository) UpsertAll(ctx context.Context, note []model.Note) (
 	return args.Get(0).([]model.Note), args.Error(1)
 }
 
-func (m *MockReaddeckClient) GetHighlights(ctx context.Context) ([]readdeck.Highlight, error) {
+func (m *MockReaddeckClient) GetHighlights(ctx context.Context, since *time.Time) ([]readdeck.Highlight, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]readdeck.Highlight), args.Error(1)
 }

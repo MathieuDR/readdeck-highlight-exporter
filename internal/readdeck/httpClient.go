@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type HttpClient struct {
@@ -45,20 +46,38 @@ func NewHttpClient(client http.Client, baseUrl, authToken string, pagesize int) 
 	}
 }
 
-func (c HttpClient) GetHighlights(ctx context.Context) ([]Highlight, error) {
+func (c HttpClient) GetHighlights(ctx context.Context, since *time.Time) ([]Highlight, error) {
 	var highlights []Highlight
 	totalPages := 1
+
 	for i := 0; i < totalPages; i++ {
 		log.Printf("Requesting page %d, offset: %d", (i + 1), i*c.pageSize)
 
 		call, err := c.doHighlightCall(ctx, c.pageSize, i*c.pageSize)
-
 		if err != nil {
-			return nil, fmt.Errorf("Error while fetching highlights: %w", err)
+			return nil, fmt.Errorf("error while fetching highlights: %w", err)
 		}
 
 		totalPages = call.TotalPages
-		highlights = append(highlights, call.Highlights...)
+
+		var pageHighlights []Highlight
+		stopFetching := false
+
+		for _, h := range call.Highlights {
+			// If since is set and we've reached older highlights, stop
+			if since != nil && h.Created.Before(*since) {
+				stopFetching = true
+				break
+			}
+			pageHighlights = append(pageHighlights, h)
+		}
+
+		highlights = append(highlights, pageHighlights...)
+
+		// If we found highlights older than our cutoff, no need to fetch more pages
+		if stopFetching {
+			break
+		}
 	}
 
 	return c.reverseList(highlights), nil

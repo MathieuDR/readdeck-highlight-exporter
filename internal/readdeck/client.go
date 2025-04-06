@@ -32,6 +32,6 @@ type Bookmark struct {
 }
 
 type Client interface {
-	GetHighlights(ctx context.Context) ([]Highlight, error)
+	GetHighlights(ctx context.Context, since *time.Time) ([]Highlight, error)
 	GetBookmark(ctx context.Context, bookmarkId string) (Bookmark, error)
 }

@@ -71,7 +71,7 @@ func TestGenerateFirstThreeNotes(t *testing.T) {
 
 	// Get highlights
 	ctx := context.Background()
-	highlights, err := readdeckClient.GetHighlights(ctx)
+	highlights, err := readdeckClient.GetHighlights(ctx, nil)
 	if err != nil {
 		t.Fatalf("Failed to get highlights: %v", err)
 	}

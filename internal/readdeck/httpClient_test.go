@@ -20,7 +20,7 @@ func TestGetHighlightsIntegration(t *testing.T) {
 	token := os.Getenv("AUTH_TOKEN")
 
 	client := NewHttpClient(http.Client{}, url, token, 100)
-	highlights, err := client.GetHighlights(ctx)
+	highlights, err := client.GetHighlights(ctx, nil)
 
 	if err != nil {
 		t.Fatalf("error while getting highlights: %s", err)
