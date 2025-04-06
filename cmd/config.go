@@ -16,7 +16,6 @@ var (
 	bookmarksPerPage int
 	timeout          time.Duration
 	fleetingPath     string
-	unsetFlag        []string
 )
 
 // configCmd represents the config command
@@ -25,10 +24,15 @@ var configCmd = &cobra.Command{
 	Short: "Configure readdeck-highlight-exporter",
 	Long: `Configure readdeck-highlight-exporter settings.
 	
-This command allows you to create or update the application configuration.
+Without arguments, this command shows the current configuration.
+With flags, it creates or updates the configuration settings.
+
 Required fields for initial setup: readdeck.base_url, readdeck.token, and export.fleeting_path.
 
 Examples:
+  # Show current configuration
+  readdeck-highlight-exporter config
+  
   # Create initial configuration
   readdeck-highlight-exporter config --base-url=https://read.example.com --token=yourtoken --fleeting-path=/path/to/notes
   
@@ -39,17 +43,21 @@ Examples:
   readdeck-highlight-exporter config --unset=readdeck.bookmarks_per_page
 `,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// If no flags are set, show the current configuration (like 'view')
+		if !cmd.Flags().Changed("base-url") &&
+			!cmd.Flags().Changed("token") &&
+			!cmd.Flags().Changed("bookmarks-per-page") &&
+			!cmd.Flags().Changed("timeout") &&
+			!cmd.Flags().Changed("fleeting-path") {
+			showConfig()
+			return nil
+		}
+
 		// Initialize defaults if config doesn't exist
 		if !configExists() {
 			defaults := config.DefaultSettings()
 			viper.SetDefault("readdeck.bookmarks_per_page", defaults.Readdeck.BookmarksPerPage)
 			viper.SetDefault("readdeck.request_timeout", defaults.Readdeck.RequestTimeout)
-		}
-
-		// Check for unset flags
-		for _, key := range unsetFlag {
-			viper.Set(key, nil)
-			fmt.Printf("Reverting %s to default value\n", key)
 		}
 
 		// Set new values from flags
@@ -122,7 +130,6 @@ func init() {
 	configCmd.Flags().IntVar(&bookmarksPerPage, "bookmarks-per-page", 100, "Number of bookmarks to fetch per request (min 10)")
 	configCmd.Flags().DurationVar(&timeout, "timeout", 30*time.Second, "HTTP request timeout")
 	configCmd.Flags().StringVar(&fleetingPath, "fleeting-path", "", "Path to fleeting notes directory")
-	configCmd.Flags().StringSliceVar(&unsetFlag, "unset", []string{}, "Revert configuration values to defaults (comma-separated)")
 }
 
 // configExists checks if a config file exists
@@ -153,3 +160,4 @@ func GetConfig() (config.Settings, error) {
 
 	return settings, nil
 }
+
