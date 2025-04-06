@@ -11,6 +11,10 @@ import (
 )
 
 func TestGetHighlightsIntegration(t *testing.T) {
+	if os.Getenv("RUN_INTEGRATION_TEST") != "true" {
+		t.Skip("Skipping integration test. Set `export RUN_INTEGRATION_TEST=true` to run")
+	}
+
 	ctx := context.TODO()
 	url := os.Getenv("BASE_URL")
 	token := os.Getenv("AUTH_TOKEN")
@@ -34,6 +38,10 @@ func TestGetHighlightsIntegration(t *testing.T) {
 }
 
 func TestBookmarkIntegration(t *testing.T) {
+	if os.Getenv("RUN_INTEGRATION_TEST") != "true" {
+		t.Skip("Skipping integration test. Set `export RUN_INTEGRATION_TEST=true` to run")
+	}
+
 	ctx := context.TODO()
 	url := os.Getenv("BASE_URL")
 	token := os.Getenv("AUTH_TOKEN")

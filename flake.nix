@@ -10,8 +10,6 @@
     };
   };
 
-  # Configure a binary cache for your executable(s).
-  # ?
   nixConfig = {
     extra-substituters = [
     ];
@@ -38,7 +36,7 @@
         pname = exe_name;
         version = version;
         src = self.outPath;
-        vendorHash = null;
+        vendorHash = "sha256-uAGuUlg1cDwxp2FtAOP5y/BYa/IM8Y0II+sZAhev7iU=";
         meta = {};
 
         # Ensure the binary is named correctly

@@ -258,7 +258,9 @@ Multi-paragraph content
 More text here.
 
 # Footer
-Final notes`),
+Final notes
+
+`),
 			path: "/path/to/headers.md",
 			want: model.ParsedNote{
 				Metadata: model.NoteMetadata{
@@ -270,17 +272,17 @@ Final notes`),
 					{
 						Type:    model.H1,
 						Title:   "Main title",
-						Content: "Some intro text",
+						Content: "Some intro text\n\n",
 					},
 					{
 						Type:    model.H2,
 						Title:   "Section 1",
-						Content: "Content for section 1\n\n```\n# My comment\ndefp some_func(a, b), do: a + b\n```",
+						Content: "Content for section 1\n\n```\n# My comment\ndefp some_func(a, b), do: a + b\n```\n\n",
 					},
 					{
 						Type:    model.H2,
 						Title:   "Section 2",
-						Content: "Multi-paragraph content\n\nMore text here.",
+						Content: "Multi-paragraph content\n\nMore text here.\n\n",
 					},
 					{
 						Type:    model.H1,
@@ -326,17 +328,17 @@ Final notes`),
 					{
 						Type:    model.H1,
 						Title:   "Main title",
-						Content: "Some intro text",
+						Content: "Some intro text\n\n",
 					},
 					{
 						Type:    model.H2,
 						Title:   "Section 1",
-						Content: "Content for section 1",
+						Content: "Content for section 1\n\n",
 					},
 					{
 						Type:    model.H2,
 						Title:   "Section 2",
-						Content: "Multi-paragraph content\n\nMore text here.",
+						Content: "Multi-paragraph content\n\nMore text here.\n\n",
 					},
 					{
 						Type:    model.H1,
@@ -374,12 +376,12 @@ created: 2025-03-26T14:00:00Z
 					{
 						Type:    model.H1,
 						Title:   "Title",
-						Content: "",
+						Content: "\n",
 					},
 					{
 						Type:    model.H2,
 						Title:   "Section 1",
-						Content: "",
+						Content: "\n",
 					},
 					{
 						Type:    model.H2,
