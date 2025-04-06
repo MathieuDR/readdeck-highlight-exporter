@@ -1,39 +1,71 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/mathieudr/readdeck-highlight-exporter/internal/config"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // viewCmd represents the view command
 var viewCmd = &cobra.Command{
 	Use:   "view",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "View current configuration",
+	Long: `Display the current configuration settings for readdeck-highlight-exporter.
+	
+This will show all configured values and their defaults.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("view called")
+		// Get default settings for comparison
+		defaults := config.DefaultSettings()
+
+		fmt.Println("Current Configuration:")
+		fmt.Println("======================")
+
+		// Readdeck settings
+		fmt.Println("\nReaddeck:")
+		fmt.Printf("  Base URL:           %s\n", viper.GetString("readdeck.base_url"))
+
+		// Don't show full token for security, just a masked version
+		token := viper.GetString("readdeck.token")
+		if token != "" {
+			masked := token
+			if len(token) > 8 {
+				masked = token[:4] + strings.Repeat("*", len(token)-8) + token[len(token)-4:]
+			} else if len(token) > 0 {
+				masked = strings.Repeat("*", len(token))
+			}
+			fmt.Printf("  Token:              %s\n", masked)
+		} else {
+			fmt.Printf("  Token:              <not set>\n")
+		}
+
+		// For values with defaults, indicate if using default
+		bpp := viper.GetInt("readdeck.bookmarks_per_page")
+		defaultIndicator := ""
+		if bpp == defaults.Readdeck.BookmarksPerPage {
+			defaultIndicator = " (default)"
+		}
+		fmt.Printf("  Bookmarks per page: %d%s\n", bpp, defaultIndicator)
+
+		timeout := viper.GetDuration("readdeck.request_timeout")
+		defaultIndicator = ""
+		if timeout == defaults.Readdeck.RequestTimeout {
+			defaultIndicator = " (default)"
+		}
+		fmt.Printf("  Request timeout:    %s%s\n", timeout, defaultIndicator)
+
+		// Export settings
+		fmt.Println("\nExport:")
+		fmt.Printf("  Fleeting path:      %s\n", viper.GetString("export.fleeting_path"))
+
+		// Display config file location
+		fmt.Printf("\nConfiguration file: %s\n", viper.ConfigFileUsed())
 	},
 }
 
 func init() {
 	configCmd.AddCommand(viewCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// viewCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// viewCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
+

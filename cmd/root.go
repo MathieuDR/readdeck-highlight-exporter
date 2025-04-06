@@ -14,16 +14,15 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "readdeck-highlight-exporter",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Short: "Export Readdeck highlights to Zettelkasten notes",
+	Long: `Readdeck Highlight Exporter is a CLI tool that exports highlights 
+from Readdeck (a read-it-later service) to your Zettelkasten note-taking system.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+The tool reads from Readdeck without modifying it and tracks exported 
+highlights through the generated notes themselves, ensuring idempotent operation.
+
+To get started, run the 'config' command to set up your configuration:
+  readdeck-highlight-exporter config --help`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -38,24 +37,22 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.readdeck-highlight-exporter.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// Config file flag
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $XDG_CONFIG_HOME/readdeck-exporter/settings.yaml)")
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	// Set up defaults from the Settings struct
+	defaults := config.DefaultSettings()
+	viper.SetDefault("readdeck.bookmarks_per_page", defaults.Readdeck.BookmarksPerPage)
+	viper.SetDefault("readdeck.request_timeout", defaults.Readdeck.RequestTimeout)
+
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
+		// Find the standard config location.
 		configDir := config.ConfigPath(config.XDGDir{})
 
 		viper.AddConfigPath(configDir)
@@ -63,6 +60,8 @@ func initConfig() {
 		viper.SetConfigName("settings")
 	}
 
+	// Read environment variables with prefix READDECK_EXPORTER
+	viper.SetEnvPrefix("readdeck_exporter")
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
