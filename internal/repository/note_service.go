@@ -55,4 +55,3 @@ func (s *ComprehensiveNoteService) GenerateNoteContent(note model.Note) (NoteOpe
 func (s *ComprehensiveNoteService) UpdateNoteContent(existing model.ParsedNote, note model.Note) (NoteOperation, error) {
 	return s.Updater.UpdateNoteContent(existing, note)
 }
-

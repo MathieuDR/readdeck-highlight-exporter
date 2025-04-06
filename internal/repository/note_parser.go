@@ -156,4 +156,3 @@ func (p *YAMLNoteParser) ParseContent(input string) ([]model.Section, error) {
 
 	return sections, nil
 }
-

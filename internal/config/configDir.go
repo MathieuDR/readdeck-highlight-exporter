@@ -1,15 +1,15 @@
 package config
 
 import (
-  "github.com/adrg/xdg"
+	"github.com/adrg/xdg"
 )
 
 type ConfigDir interface {
-  ConfigHome() string
+	ConfigHome() string
 }
 
 type XDGDir struct{}
 
 func (p XDGDir) ConfigHome() string {
-  return xdg.ConfigHome
+	return xdg.ConfigHome
 }
