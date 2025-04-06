@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/readdeck"
@@ -34,7 +35,23 @@ func (u *YAMLNoteUpdater) UpdateNoteContent(existing model.ParsedNote, note mode
 	}
 	content = append(content, frontmatter...)
 
-	return NoteOperation{}, nil
+	highlights := u.getHighlights(existing.HighlightIDs, note.Highlights)
+	bodyBytes, err := u.appendHighlightsToSections(existing.Content, highlights)
+
+	if err != nil {
+		return NoteOperation{}, fmt.Errorf("Could not generate body: %w", err)
+	}
+
+	content = append(content, bodyBytes...)
+
+	return NoteOperation{
+		Metadata: metadata,
+		Content:  content,
+	}, nil
+}
+
+func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, highlights []readdeck.Highlight) ([]byte, error) {
+	return nil, nil
 }
 
 func (u *YAMLNoteUpdater) updateMetadata(existing model.NoteMetadata, bookmark readdeck.Bookmark, highlights []readdeck.Highlight) (model.NoteMetadata, error) {
@@ -82,6 +99,45 @@ func (u *YAMLNoteUpdater) updateFrontmatter(existing map[string]interface{}, met
 	}
 
 	return []byte(fmt.Sprintf("---\n%s---\n", frontmatterBytes)), nil
+}
+
+func (u *YAMLNoteUpdater) getHighlights(existingIds []string, highlights []readdeck.Highlight) []readdeck.Highlight {
+	ids := make([]string, len(highlights))
+	for i, h := range highlights {
+		ids[i] = h.ID
+	}
+
+	newIds := u.diffHighlights(existingIds, ids)
+	lookup := make(map[string]readdeck.Highlight, len(highlights))
+	for _, h := range highlights {
+		lookup[h.ID] = h
+	}
+
+	result := make([]readdeck.Highlight, len(newIds))
+	for _, id := range newIds {
+		result = append(result, lookup[id])
+	}
+
+	return result
+}
+
+func (u *YAMLNoteUpdater) diffHighlights(existingIds []string, newIds []string) []string {
+	// Returns the IDs from newIds that aren't in existingIds
+	result := make([]string, 0, len(newIds))
+	existing := make(map[string]struct{}, len(existingIds))
+
+	for _, id := range existingIds {
+		existing[id] = struct{}{}
+	}
+
+	for _, id := range newIds {
+
+		if _, exists := existing[id]; !exists {
+			result = append(result, id)
+		}
+	}
+
+	return result
 }
 
 func (u *YAMLNoteUpdater) merge(list1 []string, list2 []string) []string {
