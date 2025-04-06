@@ -113,7 +113,7 @@ func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, h
 	// need new sections at the end of the document
 	processedColors := make(map[string]bool)
 
-	for _, section := range sections {
+	for i, section := range sections {
 		writeSection(&buffer, section)
 
 		if section.Type == model.H2 {
@@ -138,15 +138,19 @@ func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, h
 			}
 		}
 
-		buffer.WriteString("\n\n")
+		if i < len(sections)-1 {
+			buffer.WriteString("\n\n")
+		}
 	}
 
 	// For highlight colors without matching sections, add them as new sections
 	// at the end of the document in the proper order
 	for _, color := range colorOrder {
 		if !processedColors[color] && len(highlightGroups[color]) > 0 {
+			if buffer.Len() > 0 {
+				buffer.WriteString("\n\n")
+			}
 			buffer.Write(formattedByColor[color])
-			buffer.WriteString("\n\n")
 		}
 	}
 
@@ -198,8 +202,8 @@ func (u *YAMLNoteUpdater) getHighlights(existingIds []string, highlights []readd
 	}
 
 	result := make([]readdeck.Highlight, len(newIds))
-	for _, id := range newIds {
-		result = append(result, lookup[id])
+	for i, id := range newIds {
+		result[i] = lookup[id]
 	}
 
 	return result
