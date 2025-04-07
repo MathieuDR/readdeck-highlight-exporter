@@ -74,7 +74,7 @@ setup:
     go mod verify
 
 # Format Go code
-fmt:
+format:
     go fmt ./...
 
 # Generate new command template

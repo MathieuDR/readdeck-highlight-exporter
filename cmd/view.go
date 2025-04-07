@@ -73,4 +73,3 @@ This will show all configured values and their defaults.`,
 func init() {
 	configCmd.AddCommand(viewCmd)
 }
-
