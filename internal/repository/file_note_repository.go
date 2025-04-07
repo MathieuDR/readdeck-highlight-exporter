@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -13,25 +12,19 @@ import (
 )
 
 type FileNoteRepository struct {
-	basePath    string
-	fleetingDir string
-	noteService NoteService
+	fleetingPath string
+	noteService  NoteService
 }
 
-func NewFileNoteRepository(basePath, fleetingDir string, noteService NoteService) *FileNoteRepository {
+func NewFileNoteRepository(fleetingPath string, noteService NoteService) *FileNoteRepository {
 	return &FileNoteRepository{
-		basePath:    basePath,
-		fleetingDir: fleetingDir,
-		noteService: noteService,
+		fleetingPath: fleetingPath,
+		noteService:  noteService,
 	}
 }
 
-func (f *FileNoteRepository) getFleetingNotesPath() string {
-	return path.Join(f.basePath, f.fleetingDir)
-}
-
 func (f *FileNoteRepository) UpsertAll(ctx context.Context, notes []model.Note) ([]model.Note, error) {
-	notePaths, err := f.findNotesInDirectory(f.getFleetingNotesPath())
+	notePaths, err := f.findNotesInDirectory(f.fleetingPath)
 
 	if err != nil {
 		return nil, fmt.Errorf("could not find note paths: %w", err)
@@ -107,7 +100,7 @@ func (f *FileNoteRepository) createNote(note model.Note) (model.Note, error) {
 	// TODO: Make immutable
 	result := note
 
-	notePath := fmt.Sprintf("%s/%s.md", f.getFleetingNotesPath(), operation.Metadata.ID)
+	notePath := fmt.Sprintf("%s/%s.md", f.fleetingPath, operation.Metadata.ID)
 	result.Path = notePath
 
 	err = f.writeBytes(operation.Content, notePath)

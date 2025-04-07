@@ -2,6 +2,7 @@ package repository
 
 import (
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -81,7 +82,8 @@ func TestFileNoteRepository_findNotesInDirectory(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := NewFileNoteRepository(tt.basePath, tt.fleetingDir, mockParser)
+			path := path.Join(tt.basePath, tt.fleetingDir)
+			f := NewFileNoteRepository(path, mockParser)
 			got, err := f.findNotesInDirectory(tt.dirPath)
 
 			if tt.wantErr {
@@ -184,7 +186,7 @@ func TestFileNoteRepository_createLookup(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := NewFileNoteRepository("", "", nil)
+			f := NewFileNoteRepository("", nil)
 			got := f.createLookup(tt.parsedNotes)
 			assert.Equal(t, tt.want, got)
 		})

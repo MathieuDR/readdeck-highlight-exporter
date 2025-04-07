@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -108,11 +109,8 @@ func TestGenerateFirstThreeNotes(t *testing.T) {
 	generator := repository.NewYAMLNoteGenerator(formatter)
 	updater := repository.NewYAMLNoteUpdater(generator, parser)
 	noteService := repository.NewCustomNoteService(parser, generator, updater)
-	noteRepo := repository.NewFileNoteRepository(
-		projectRoot,
-		"test_artifacts",
-		noteService,
-	)
+	fleetingNotes := path.Join(projectRoot, "test_artifacts")
+	noteRepo := repository.NewFileNoteRepository(fleetingNotes, noteService)
 
 	// Manually get bookmark details and construct notes
 	notes := make([]model.Note, 0, len(processedBookmarks))
