@@ -38,20 +38,20 @@ Examples:
   readdeck-highlight-exporter export --verbose
   readdeck-highlight-exporter export --timing`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// Clear standard log prefix for cleaner output
+		log.SetFlags(0)
+
 		startTime := time.Now()
 
 		exporter := getExporter()
 		ctx := context.Background()
 
-		log.Println("Starting export from Readdeck...")
+		fmt.Println("Starting export from Readdeck...")
 		results, err := exporter.Export(ctx)
 
 		if err != nil {
 			log.Fatalf("Export failed:\n\n%v", err)
 		}
-
-		// Clear standard log prefix for cleaner output
-		log.SetFlags(0)
 
 		// Print summary
 		display.PrintSummary(results, timing, time.Since(startTime))
@@ -95,6 +95,6 @@ func getRepository() repository.NoteRepository {
 	updater := repository.NewYAMLNoteUpdater(generator, parser)
 	noteService := repository.NewCustomNoteService(parser, generator, updater)
 	fleetingPath := viper.GetString("export.fleeting_path")
-	log.Printf("Saving to: %s", fleetingPath)
+	fmt.Printf("Saving to: %s\n", fleetingPath)
 	return repository.NewFileNoteRepository(fleetingPath, noteService)
 }
