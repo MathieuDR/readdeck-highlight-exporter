@@ -46,11 +46,12 @@ highlight-exporter config --timeout=45s --bookmarks-per-page=90
     - [ ] Lookup for files with readdeck id, to skip reading the files. Limiting IO.
 - [ ] Better logging
     - [ ] Log in the same line, while doing stuff (eg walking path, fetching api's, writing files)
-    - [ ] Show which files needed updates, created, or NO-OP
-    - [ ] Better summary, eg X Amount created, X Updated, X No 
-    - [ ] Detailed (verbose) that shows the info that's now with the len 20 but without an if statement
-    - [ ] A 'timed' flag, that times/benchmarks the run, tells you how long it was busy, maybe default to true, or without a flag?
+    - [x] Show which files needed updates, created, or NO-OP
+    - [x] Better summary, eg X Amount created, X Updated, X No 
+    - [x] Detailed (verbose) that shows the info that's now with the len 20 but without an if statement
+    - [x] A 'timed' flag, that times/benchmarks the run, tells you how long it was busy, maybe default to true, or without a flag?
 - [ ] Make it available in my nix packages somehow?
+    - [ ] Perhaps we create a repo that holds all references to my own packages?
 
 ## License
 MIT
