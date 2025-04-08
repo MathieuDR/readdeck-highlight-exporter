@@ -27,31 +27,37 @@ func PrintSummary(results []repository.OperationResult, printTiming bool, durati
 		newHighlights += r.HighlightsAdded
 	}
 
-	fmt.Println("\nExport Summary")
-	fmt.Println("===================================")
-	fmt.Printf("Processed %d notes (%d created, %d updated, %d unchanged)\n",
-		len(results), created, updated, unchanged)
+	fmt.Println("\n" + HeaderColor("Export Summary"))
+	fmt.Println(HeaderColor("==================================="))
+
+	fmt.Printf("Processed %d notes (%s created, %s updated, %s unchanged)\n",
+		len(results),
+		CreatedColor(fmt.Sprintf("%d", created)),
+		UpdatedColor(fmt.Sprintf("%d", updated)),
+		UnchangedColor(fmt.Sprintf("%d", unchanged)))
 
 	if newHighlights > 0 {
-		fmt.Printf("Total highlights: %d (%d new added)\n", totalHighlights, newHighlights)
+		fmt.Printf("Total highlights: %d (%s new added)\n",
+			totalHighlights,
+			CreatedColor(fmt.Sprintf("+%d", newHighlights)))
 	} else {
 		fmt.Printf("Total highlights: %d\n", totalHighlights)
 	}
 
 	if printTiming {
-		if printTiming {
-			if duration.Seconds() < 10 {
-				fmt.Printf("Time: %dms\n", duration.Milliseconds())
-			} else {
-				fmt.Printf("Time: %.2fs\n", duration.Seconds())
-			}
+		var timeStr string
+		if duration.Seconds() < 10 {
+			timeStr = fmt.Sprintf("%dms", duration.Milliseconds())
+		} else {
+			timeStr = fmt.Sprintf("%.2fs", duration.Seconds())
 		}
+		fmt.Printf("Time: %s\n", TimeColor(timeStr))
 	}
 }
 
 func PrintDetails(results []repository.OperationResult) {
-	fmt.Println("\nNotes Detail")
-	fmt.Println("===================================")
+	fmt.Println("\n" + HeaderColor("Notes Detail"))
+	fmt.Println(HeaderColor("==================================="))
 
 	// Group by type for better organization
 	createdNotes := filterByType(results, "created")
@@ -60,25 +66,28 @@ func PrintDetails(results []repository.OperationResult) {
 
 	// Print created notes first
 	if len(createdNotes) > 0 {
-		fmt.Println("\n✨ Created:")
+		fmt.Println(BoldCreated("✨ Created:"))
 		for _, r := range createdNotes {
 			printNoteDetail(r, true)
+			fmt.Println("")
 		}
 	}
 
 	// Print updated notes next
 	if len(updatedNotes) > 0 {
-		fmt.Println("\n🔄 Updated:")
+		fmt.Println(BoldUpdated("🔄 Updated:"))
 		for _, r := range updatedNotes {
 			printNoteDetail(r, true)
+			fmt.Println("")
 		}
 	}
 
 	// Print unchanged notes with less detail
 	if len(unchangedNotes) > 0 {
-		fmt.Println("\n⏭️ Unchanged:")
+		fmt.Println(BoldUnchanged("⏭️ Unchanged:"))
 		for _, r := range unchangedNotes {
 			printNoteDetail(r, false)
+			fmt.Println("")
 		}
 	}
 }
@@ -96,12 +105,12 @@ func filterByType(results []repository.OperationResult, opType string) []reposit
 func printNoteDetail(r repository.OperationResult, detailed bool) {
 	note := r.Note
 
-	fmt.Printf("  • %s\n", note.Bookmark.Title)
+	fmt.Printf("%s\n", BoldTitle(note.Bookmark.Title))
 
 	if detailed {
 		fmt.Printf("    Highlights: %d", len(note.Highlights))
 		if r.Type == "updated" && r.HighlightsAdded > 0 {
-			fmt.Printf(" (+%d new)", r.HighlightsAdded)
+			fmt.Printf(" (%s)", CreatedColor(fmt.Sprintf("+%d", r.HighlightsAdded)))
 		}
 		fmt.Println()
 
@@ -133,7 +142,22 @@ func formatColorBreakdown(colorCounts map[string]int) string {
 		if name, ok := config.ColorNames[color]; ok {
 			friendlyName = name
 		}
-		colorInfo = append(colorInfo, fmt.Sprintf("%d %s", count, friendlyName))
+
+		segment := fmt.Sprintf("%d %s", count, friendlyName)
+
+		switch color {
+		case "yellow":
+			colorInfo = append(colorInfo, Yellow(segment))
+		case "red":
+			colorInfo = append(colorInfo, Red(segment))
+		case "blue":
+			colorInfo = append(colorInfo, Blue(segment))
+		case "green":
+			colorInfo = append(colorInfo, Green(segment))
+		default:
+			colorInfo = append(colorInfo, White(segment))
+		}
 	}
 	return strings.Join(colorInfo, ", ")
 }
+

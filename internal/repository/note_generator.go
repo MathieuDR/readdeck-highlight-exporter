@@ -110,4 +110,3 @@ func (g *YAMLNoteGenerator) generateFrontmatter(metadata model.NoteMetadata) ([]
 
 	return []byte(fmt.Sprintf("---\n%s---\n", yamlData)), nil
 }
-

@@ -36,7 +36,7 @@
         pname = exe_name;
         version = version;
         src = self.outPath;
-        vendorHash = "sha256-uAGuUlg1cDwxp2FtAOP5y/BYa/IM8Y0II+sZAhev7iU=";
+        vendorHash = "sha256-+V4LaP3PP8KdcEx1iFWrhVQ1YjXqI51vzhcqA6VI36k=";
         meta = {};
 
         # Ensure the binary is named correctly
