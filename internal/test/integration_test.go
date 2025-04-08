@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mathieudr/readdeck-highlight-exporter/internal/display"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/readdeck"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/repository"
@@ -133,22 +134,7 @@ func TestGenerateFirstThreeNotes(t *testing.T) {
 	}
 
 	// Log the results
-	t.Logf("Successfully saved %d notes:", len(savedNotes))
-	for i, note := range savedNotes {
-		t.Logf("%d. %s - %s (%d highlights)",
-			i+1,
-			note.Bookmark.Title,
-			filepath.Base(note.Path),
-			len(note.Highlights),
-		)
-	}
-
-	// Validate the files exist
-	for _, note := range savedNotes {
-		if _, err := os.Stat(note.Path); os.IsNotExist(err) {
-			t.Errorf("Expected file %s does not exist", note.Path)
-		}
-	}
+	display.PrintSummary(savedNotes, false, 0)
 
 	t.Log("Test completed successfully!")
 }

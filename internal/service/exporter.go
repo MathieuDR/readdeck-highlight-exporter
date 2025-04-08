@@ -23,15 +23,14 @@ func NewExporter(client readdeck.Client, repo repository.NoteRepository) *Export
 
 // Entrypoint
 // Needs to get highlights, details, parse them and save them
-func (e *Exporter) Export(ctx context.Context) ([]model.Note, error) {
+func (e *Exporter) Export(ctx context.Context) ([]repository.OperationResult, error) {
 	highlights, err := e.readdeckClient.GetHighlights(ctx, nil)
-
 	if err != nil {
 		return nil, err
 	}
 
-	groupedHiglights := e.groupHighlightsByBookmark(highlights)
-	bookmarkHighlights, err := e.resolveBookmarks(ctx, groupedHiglights)
+	groupedHighlights := e.groupHighlightsByBookmark(highlights)
+	bookmarkHighlights, err := e.resolveBookmarks(ctx, groupedHighlights)
 
 	if err != nil {
 		return nil, err
