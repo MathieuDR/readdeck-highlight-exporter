@@ -150,9 +150,6 @@ func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, h
 	return buffer.Bytes()
 }
 
-// writeSection handles writing a section's header and content to the buffer
-// based on its heading type, properly formatting headers with the correct
-// number of hash symbols
 func writeSection(buffer *bytes.Buffer, section model.Section) {
 	if section.Type != model.None {
 		level := 0

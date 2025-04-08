@@ -17,10 +17,8 @@ import (
 
 var (
 	verbose bool
-	timing  bool
 )
 
-// exportCmd represents the export command
 var exportCmd = &cobra.Command{
 	Use:   "export",
 	Short: "Export highlights from Readdeck to Zettelkasten notes",
@@ -53,10 +51,8 @@ Examples:
 			log.Fatalf("Export failed:\n\n%v", err)
 		}
 
-		// Print summary
-		display.PrintSummary(results, timing, time.Since(startTime))
+		display.PrintSummary(results, true, time.Since(startTime))
 
-		// Print details if needed
 		if verbose {
 			display.PrintDetails(results)
 		}
@@ -68,7 +64,6 @@ Examples:
 func init() {
 	rootCmd.AddCommand(exportCmd)
 	exportCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
-	exportCmd.Flags().BoolVarP(&timing, "timing", "t", false, "Show timing information")
 }
 
 func getExporter() *service.Exporter {

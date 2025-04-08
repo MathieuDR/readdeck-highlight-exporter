@@ -40,7 +40,6 @@ func (f *FileNoteRepository) UpsertAll(ctx context.Context, notes []model.Note) 
 
 	parsedNotes, skippedPaths := f.readNoteFiles(notePaths)
 
-	// If we're in verbose mode, print info about skipped files
 	if f.verbose && len(skippedPaths) > 0 {
 		fmt.Printf("\nSkipped %d note(s) due to parsing errors:\n", len(skippedPaths))
 		for path, err := range skippedPaths {
@@ -210,7 +209,6 @@ func (f *FileNoteRepository) findNotesInDirectory(dirPath string) ([]string, err
 	return notePaths, nil
 }
 
-// Updated to return a map of errors by path for skipped files
 func (f *FileNoteRepository) readNoteFiles(filePaths []string) ([]model.ParsedNote, map[string]error) {
 	results := make([]model.ParsedNote, 0, len(filePaths))
 	skippedPaths := make(map[string]error)
@@ -240,4 +238,3 @@ func (f *FileNoteRepository) readNoteFile(filePath string) (model.ParsedNote, er
 
 	return parsedNote, nil
 }
-

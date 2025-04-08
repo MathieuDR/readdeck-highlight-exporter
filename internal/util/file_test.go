@@ -10,6 +10,7 @@ import (
 
 func TestGenerateId(t *testing.T) {
 	tests := []struct {
+		// LEARNING
 		name string // description of this test case
 		// Named input parameters for target function.
 		title     string

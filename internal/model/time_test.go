@@ -9,7 +9,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Test struct that embeds SimpleTime for YAML marshalling tests
 type TestTimeStruct struct {
 	Time SimpleTime `yaml:"time"`
 }
@@ -111,7 +110,6 @@ func TestSimpleTimeUnmarshalYAML(t *testing.T) {
 				return
 			}
 
-			// Convert back to string in our expected format for comparison
 			gotStr := ts.Time.Format(ExpectedTimeFormat)
 			assert.Equal(t, tt.want, gotStr)
 		})
@@ -169,7 +167,6 @@ func TestRoundTripMarshalUnmarshal(t *testing.T) {
 		restored.Time.Format(ExpectedTimeFormat))
 }
 
-// Helper function to parse test times
 func parseTime(t *testing.T, timeStr string) time.Time {
 	parsed, err := time.Parse(ExpectedTimeFormat, timeStr)
 	if err != nil {
@@ -178,7 +175,6 @@ func parseTime(t *testing.T, timeStr string) time.Time {
 	return parsed
 }
 
-// Test a more complex struct with multiple time fields
 type ComplexTimeStruct struct {
 	Title     string     `yaml:"title"`
 	Created   SimpleTime `yaml:"created"`
@@ -189,7 +185,6 @@ type ComplexTimeStruct struct {
 }
 
 func TestComplexTimeStruct(t *testing.T) {
-	// Create a complex struct with various time fields
 	input := `
 title: Test Document
 created: 2023-01-15 09:30
@@ -205,7 +200,6 @@ empty_time: ""
 	err := yaml.Unmarshal([]byte(input), &complex)
 	assert.NoError(t, err)
 
-	// Verify each field
 	assert.Equal(t, "Test Document", complex.Title)
 	assert.Equal(t, "2023-01-15 09:30", complex.Created.Format(ExpectedTimeFormat))
 	assert.Equal(t, "2023-02-20 14:45", complex.Modified.Format(ExpectedTimeFormat))
@@ -213,7 +207,6 @@ empty_time: ""
 	assert.Equal(t, []string{"test", "time"}, complex.Tags)
 	assert.True(t, complex.EmptyTime.IsZero())
 
-	// Marshal back to YAML
 	yamlData, err := yaml.Marshal(complex)
 	assert.NoError(t, err)
 

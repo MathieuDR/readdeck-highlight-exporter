@@ -11,6 +11,7 @@ type SimpleTime struct {
 }
 
 // The expected time format for our application
+// LEARNING: It uses special format of this specific date/time. It's strange
 const ExpectedTimeFormat = "2006-01-02 15:04"
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface for SimpleTime

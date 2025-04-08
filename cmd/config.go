@@ -104,13 +104,11 @@ Examples:
 			}
 		}
 
-		// Create config directory if it doesn't exist
 		configDir := config.ConfigHome()
 		if err := os.MkdirAll(configDir, 0755); err != nil {
 			return fmt.Errorf("failed to create config directory: %w", err)
 		}
 
-		// Save configuration
 		configFile := configDir + "/settings.yaml"
 		if err := viper.WriteConfigAs(configFile); err != nil {
 			return fmt.Errorf("failed to save configuration: %w", err)
@@ -132,7 +130,6 @@ func init() {
 	configCmd.Flags().StringVar(&fleetingPath, "fleeting-path", "", "Path to fleeting notes directory")
 }
 
-// configExists checks if a config file exists
 func configExists() bool {
 	configFile := viper.ConfigFileUsed()
 	if configFile == "" {
@@ -142,14 +139,13 @@ func configExists() bool {
 	return err == nil
 }
 
-// GetConfig loads configuration into Settings struct
 func GetConfig() (config.Settings, error) {
 	var settings config.Settings
 	if err := viper.Unmarshal(&settings); err != nil {
 		return config.Settings{}, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
-	// Merge with defaults for any unset values
+	// Merge with defaults
 	defaults := config.DefaultSettings()
 	if settings.Readdeck.BookmarksPerPage == 0 {
 		settings.Readdeck.BookmarksPerPage = defaults.Readdeck.BookmarksPerPage

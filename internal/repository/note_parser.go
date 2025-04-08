@@ -32,6 +32,7 @@ func NewYAMLNoteParser() *YAMLNoteParser {
 }
 
 func (p *YAMLNoteParser) ParseNote(content []byte, path string) (model.ParsedNote, error) {
+	// LEARNING: It should be fast enough.
 	// We first parse the frontmatter to a map, so we keep the dynamic / unknown content
 	// Then we parse the map into yaml and the yaml to struct. It all happens in memory
 	var rawMap map[string]interface{}
@@ -50,7 +51,6 @@ func (p *YAMLNoteParser) ParseNote(content []byte, path string) (model.ParsedNot
 		return model.ParsedNote{}, fmt.Errorf("could not unmarshal to struct: %w", err)
 	}
 
-	// Validate metadata
 	if err := p.Validator.Struct(&metadata); err != nil {
 		return model.ParsedNote{}, fmt.Errorf("frontmatter is invalid: %w", err)
 	}
@@ -60,7 +60,6 @@ func (p *YAMLNoteParser) ParseNote(content []byte, path string) (model.ParsedNot
 		return model.ParsedNote{}, err
 	}
 
-	// Parse the content into sections
 	sections := p.ParseContent(string(textContent))
 
 	return model.ParsedNote{

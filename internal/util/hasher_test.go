@@ -69,10 +69,6 @@ func TestGobHasher_Encode(t *testing.T) {
 				t.Fatal("Encode() succeeded unexpectedly")
 			}
 
-			// We don't check specific encoded values because the gob encoding
-			// might change between Go versions. Instead, we'll verify the
-			// round-trip functionality in an additional test.
-
 			if got == "" {
 				t.Errorf("Encode() returned empty string")
 			}
@@ -94,12 +90,11 @@ func TestGobHasher_Decode(t *testing.T) {
 		},
 		{
 			name:    "valid base64 but invalid gob",
-			encoded: "SGVsbG8gV29ybGQh", // "Hello World!" in base64
+			encoded: "SGVsbG8gV29ybGQh",
 			wantErr: true,
 		},
 	}
 
-	// We'll add more test cases using actual encoded values
 	h := util.NewGobHasher()
 
 	testInputs := [][]string{
@@ -152,7 +147,6 @@ func TestGobHasher_Decode(t *testing.T) {
 	}
 }
 
-// TestRoundTrip verifies that encoding and then decoding preserves the original data
 func TestRoundTrip(t *testing.T) {
 	testCases := []struct {
 		name  string
@@ -190,7 +184,6 @@ func TestRoundTrip(t *testing.T) {
 	}
 }
 
-// TestReuse verifies that the GobHasher can be reused for multiple operations
 func TestReuse(t *testing.T) {
 	h := util.NewGobHasher()
 
@@ -210,7 +203,6 @@ func TestReuse(t *testing.T) {
 		encodedResults = append(encodedResults, encoded)
 	}
 
-	// Test multiple decodes with the same hasher
 	for i, encoded := range encodedResults {
 		decoded, err := h.Decode(encoded)
 		if err != nil {

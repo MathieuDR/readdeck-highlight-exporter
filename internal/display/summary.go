@@ -10,7 +10,6 @@ import (
 )
 
 func PrintSummary(results []repository.OperationResult, printTiming bool, duration time.Duration) {
-	// Count operations by type
 	created, updated, unchanged := 0, 0, 0
 	totalHighlights, newHighlights := 0, 0
 
@@ -42,10 +41,8 @@ func PrintSummary(results []repository.OperationResult, printTiming bool, durati
 	if printTiming {
 		if printTiming {
 			if duration.Seconds() < 10 {
-				// For durations less than 10 seconds, show in milliseconds
 				fmt.Printf("Time: %dms\n", duration.Milliseconds())
 			} else {
-				// For durations 10 seconds or longer, show in seconds with 2 decimal places
 				fmt.Printf("Time: %.2fs\n", duration.Seconds())
 			}
 		}
@@ -99,10 +96,8 @@ func filterByType(results []repository.OperationResult, opType string) []reposit
 func printNoteDetail(r repository.OperationResult, detailed bool) {
 	note := r.Note
 
-	// Basic information
 	fmt.Printf("  • %s\n", note.Bookmark.Title)
 
-	// For created/updated or verbose mode, show more details
 	if detailed {
 		fmt.Printf("    Highlights: %d", len(note.Highlights))
 		if r.Type == "updated" && r.HighlightsAdded > 0 {
@@ -112,13 +107,11 @@ func printNoteDetail(r repository.OperationResult, detailed bool) {
 
 		fmt.Printf("    Path: %s\n", note.Path)
 
-		// Get color breakdown with friendly names
 		colorCounts := getColorBreakdown(note.Highlights)
 		if len(colorCounts) > 0 {
 			fmt.Printf("    Types: %s\n", formatColorBreakdown(colorCounts))
 		}
 	} else {
-		// Minimal output for unchanged notes
 		fmt.Printf("    Highlights: %d\n", len(note.Highlights))
 	}
 }
@@ -132,7 +125,6 @@ func getColorBreakdown(highlights []readdeck.Highlight) map[string]int {
 }
 
 func formatColorBreakdown(colorCounts map[string]int) string {
-	// Use the same color config from the formatter for consistent naming
 	config := repository.DefaultColorConfig()
 
 	colorInfo := []string{}

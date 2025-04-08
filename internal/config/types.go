@@ -7,13 +7,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Settings holds all application configuration
 type Settings struct {
 	Readdeck ReaddeckSettings `mapstructure:"readdeck"`
 	Export   ExportSettings   `mapstructure:"export"`
 }
 
-// ReaddeckSettings contains all Readdeck API-related configuration
 type ReaddeckSettings struct {
 	BaseURL          string        `mapstructure:"base_url"`
 	Token            string        `mapstructure:"token"`
@@ -21,12 +19,10 @@ type ReaddeckSettings struct {
 	RequestTimeout   time.Duration `mapstructure:"request_timeout"`
 }
 
-// ExportSettings contains export-related configuration
 type ExportSettings struct {
 	FleetingPath string `mapstructure:"fleeting_path"`
 }
 
-// DefaultSettings returns the default configuration
 func DefaultSettings() Settings {
 	return Settings{
 		Readdeck: ReaddeckSettings{
@@ -36,7 +32,6 @@ func DefaultSettings() Settings {
 	}
 }
 
-// LoadAndValidate loads the configuration and validates required fields
 func LoadAndValidate() (Settings, error) {
 	var settings Settings
 	if err := viper.Unmarshal(&settings); err != nil {

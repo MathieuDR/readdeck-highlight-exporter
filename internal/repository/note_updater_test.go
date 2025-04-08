@@ -67,8 +67,6 @@ func TestYAMLNoteUpdater_diffHighlights(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// We don't actually need real implementations of these for the test
-			// since diffHighlights doesn't use them
 			u := &YAMLNoteUpdater{}
 
 			got := u.diffHighlights(tt.existingIds, tt.newIds)
@@ -84,7 +82,6 @@ func TestYAMLNoteUpdater_diffHighlights(t *testing.T) {
 	}
 }
 func TestYAMLNoteUpdater_getHighlights(t *testing.T) {
-	// Create some test highlights
 	h1 := readdeck.Highlight{ID: "h1", Text: "Highlight 1"}
 	h2 := readdeck.Highlight{ID: "h2", Text: "Highlight 2"}
 	h3 := readdeck.Highlight{ID: "h3", Text: "Highlight 3"}
@@ -136,11 +133,7 @@ func TestYAMLNoteUpdater_getHighlights(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// We can create a simple updater since we're only testing getHighlights
-			u := &YAMLNoteUpdater{
-				// Create a mock implementation of diffHighlights to simulate real behavior
-				// This is optional since we're testing a method that calls another method
-			}
+			u := &YAMLNoteUpdater{}
 
 			got := u.getHighlights(tt.existingIds, tt.highlights)
 

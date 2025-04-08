@@ -6,18 +6,16 @@ import (
 	"encoding/gob"
 )
 
-// GobHasher provides a reusable structure for encoding and decoding
-// string slices using gob encoding and base64.
 type GobHasher struct {
 	encBuf bytes.Buffer
 	decBuf bytes.Buffer
 }
 
-// NewGobHasher creates a new instance of GobHasher.
 func NewGobHasher() *GobHasher {
 	return &GobHasher{}
 }
 
+// NOT THREAD SAFE since we use same buffer
 func (h *GobHasher) Encode(input []string) (string, error) {
 	// Reset the buffer for reuse
 	h.encBuf.Reset()

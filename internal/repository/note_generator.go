@@ -12,23 +12,19 @@ import (
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/util"
 )
 
-// NoteOperation represents the result of a note generation/update operation
 type NoteOperation struct {
 	Metadata model.NoteMetadata
 	Content  []byte
 }
 
-// NoteGenerator is responsible for creating new note content
 type NoteGenerator interface {
 	GenerateNoteContent(note model.Note) (NoteOperation, error)
 }
 
-// NoteUpdater is responsible for updating existing note content
 type NoteUpdater interface {
 	UpdateNoteContent(existing model.ParsedNote, note model.Note) (NoteOperation, error)
 }
 
-// YAMLNoteGenerator handles the generation of notes with YAML frontmatter
 type YAMLNoteGenerator struct {
 	Hasher             *util.GobHasher
 	HighlightFormatter *HighlightFormatter
@@ -87,7 +83,6 @@ func (g *YAMLNoteGenerator) generateMetadata(bookmark readdeck.Bookmark, highlig
 		return model.NoteMetadata{}, fmt.Errorf("could not hash highlights: %w", err)
 	}
 
-	// Convert time.Time to the expected format for our SimpleTime
 	created := model.SimpleTime{Time: bookmark.Created}
 	published := model.SimpleTime{Time: bookmark.Published}
 

@@ -9,19 +9,16 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Common function to show configuration
+// Common since we use it in cmd/config.go too
 func showConfig() {
-	// Get default settings for comparison
 	defaults := config.DefaultSettings()
 
 	fmt.Println("Current Configuration:")
 	fmt.Println("======================")
 
-	// Readdeck settings
 	fmt.Println("\nReaddeck:")
 	fmt.Printf("  Base URL:           %s\n", viper.GetString("readdeck.base_url"))
 
-	// Don't show full token for security, just a masked version
 	token := viper.GetString("readdeck.token")
 	if token != "" {
 		masked := token
@@ -35,7 +32,6 @@ func showConfig() {
 		fmt.Printf("  Token:              <not set>\n")
 	}
 
-	// For values with defaults, indicate if using default
 	bpp := viper.GetInt("readdeck.bookmarks_per_page")
 	defaultIndicator := ""
 	if bpp == defaults.Readdeck.BookmarksPerPage {
@@ -50,15 +46,12 @@ func showConfig() {
 	}
 	fmt.Printf("  Request timeout:    %s%s\n", timeout, defaultIndicator)
 
-	// Export settings
 	fmt.Println("\nExport:")
 	fmt.Printf("  Fleeting path:      %s\n", viper.GetString("export.fleeting_path"))
 
-	// Display config file location
 	fmt.Printf("\nConfiguration file: %s\n", viper.ConfigFileUsed())
 }
 
-// viewCmd represents the view command
 var viewCmd = &cobra.Command{
 	Use:   "view",
 	Short: "View current configuration",

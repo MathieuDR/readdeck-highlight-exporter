@@ -5,7 +5,6 @@ import (
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
 )
 
-// NoteService combines all note operations into a single interface
 type NoteService interface {
 	ParseNote(content []byte, path string) (model.ParsedNote, error)
 	GenerateNoteContent(note model.Note) (NoteOperation, error)
