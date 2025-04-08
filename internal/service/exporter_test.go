@@ -8,6 +8,7 @@ import (
 
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/readdeck"
+	"github.com/mathieudr/readdeck-highlight-exporter/internal/repository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -20,9 +21,9 @@ type MockNoteRepository struct {
 	mock.Mock
 }
 
-func (m *MockNoteRepository) UpsertAll(ctx context.Context, note []model.Note) ([]model.Note, error) {
+func (m *MockNoteRepository) UpsertAll(ctx context.Context, note []model.Note) ([]repository.OperationResult, error) {
 	args := m.Called(ctx, note)
-	return args.Get(0).([]model.Note), args.Error(1)
+	return args.Get(0).([]repository.OperationResult), args.Error(1)
 }
 
 func (m *MockReaddeckClient) GetHighlights(ctx context.Context, since *time.Time) ([]readdeck.Highlight, error) {
@@ -61,6 +62,19 @@ func TestExport(t *testing.T) {
 		Highlights: []readdeck.Highlight{highlight2},
 	}
 
+	expectedResults := []repository.OperationResult{
+		{
+			Type:            "created",
+			Note:            expectedNote1,
+			HighlightsAdded: 1,
+		},
+		{
+			Type:            "created",
+			Note:            expectedNote2,
+			HighlightsAdded: 1,
+		},
+	}
+
 	mockClient.On("GetHighlights", ctx).Return(highlights, nil)
 	mockClient.On("GetBookmark", ctx, "book1").Return(bookmark1, nil)
 	mockClient.On("GetBookmark", ctx, "book2").Return(bookmark2, nil)
@@ -69,16 +83,16 @@ func TestExport(t *testing.T) {
 		return len(notes) == 2 &&
 			notes[0].Bookmark.ID == "book1" &&
 			notes[1].Bookmark.ID == "book2"
-	})).Return([]model.Note{expectedNote1, expectedNote2}, nil)
+	})).Return(expectedResults, nil)
 
-	notes, err := exporter.Export(ctx)
+	operationResults, err := exporter.Export(ctx)
 
 	assert.NoError(t, err)
-	assert.Equal(t, 2, len(notes))
+	assert.Equal(t, 2, len(operationResults))
 
 	noteMap := make(map[string]model.Note)
-	for _, note := range notes {
-		noteMap[note.Bookmark.ID] = note
+	for _, result := range operationResults {
+		noteMap[result.Note.Bookmark.ID] = result.Note
 	}
 
 	assert.Equal(t, expectedNote1, noteMap["book1"])
