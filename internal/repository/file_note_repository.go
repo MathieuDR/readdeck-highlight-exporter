@@ -1,3 +1,4 @@
+// internal/repository/file_note_repository.go
 package repository
 
 import (
@@ -20,12 +21,14 @@ type OperationResult struct {
 type FileNoteRepository struct {
 	fleetingPath string
 	noteService  NoteService
+	verbose      bool
 }
 
-func NewFileNoteRepository(fleetingPath string, noteService NoteService) *FileNoteRepository {
+func NewFileNoteRepository(fleetingPath string, noteService NoteService, verbose bool) *FileNoteRepository {
 	return &FileNoteRepository{
 		fleetingPath: fleetingPath,
 		noteService:  noteService,
+		verbose:      verbose,
 	}
 }
 
@@ -35,20 +38,29 @@ func (f *FileNoteRepository) UpsertAll(ctx context.Context, notes []model.Note) 
 		return nil, fmt.Errorf("could not find note paths: %w", err)
 	}
 
-	parsedNotes, err := f.readNoteFiles(notePaths)
-	if err != nil {
-		return nil, err
+	parsedNotes, skippedPaths := f.readNoteFiles(notePaths)
+
+	// If we're in verbose mode, print info about skipped files
+	if f.verbose && len(skippedPaths) > 0 {
+		fmt.Printf("\nSkipped %d note(s) due to parsing errors:\n", len(skippedPaths))
+		for path, err := range skippedPaths {
+			fmt.Printf("  - %s: %v\n", path, err)
+		}
 	}
 
 	lookup := f.createLookup(parsedNotes)
-	results := make([]OperationResult, len(notes))
+	results := make([]OperationResult, 0, len(notes))
 
-	for i, toWriteNote := range notes {
+	for _, toWriteNote := range notes {
 		result, err := f.processNote(toWriteNote, lookup)
 		if err != nil {
-			return nil, err
+			if f.verbose {
+				fmt.Printf("Warning: Failed to process note for bookmark %s: %v\n",
+					toWriteNote.Bookmark.ID, err)
+			}
+			continue
 		}
-		results[i] = result
+		results = append(results, result)
 	}
 
 	return results, nil
@@ -169,9 +181,6 @@ func (f *FileNoteRepository) createLookup(parsedNotes []model.ParsedNote) map[st
 	return lookup
 }
 
-// LEARNING: Even though it's stateless it ONLY makes sense in the
-// context of the FileNoteRepository and thus should be part of that domain
-// Another VALID approach would to put this under a util package
 func (f *FileNoteRepository) findNotesInDirectory(dirPath string) ([]string, error) {
 	notePaths := make([]string, 0)
 
@@ -201,31 +210,34 @@ func (f *FileNoteRepository) findNotesInDirectory(dirPath string) ([]string, err
 	return notePaths, nil
 }
 
-func (f *FileNoteRepository) readNoteFiles(filePaths []string) ([]model.ParsedNote, error) {
+// Updated to return a map of errors by path for skipped files
+func (f *FileNoteRepository) readNoteFiles(filePaths []string) ([]model.ParsedNote, map[string]error) {
 	results := make([]model.ParsedNote, 0, len(filePaths))
+	skippedPaths := make(map[string]error)
 
-	// Can make parallel later
 	for _, path := range filePaths {
 		note, err := f.readNoteFile(path)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read note at %s: %w", path, err)
+			skippedPaths[path] = err
+			continue // Skip this file but continue with others
 		}
 		results = append(results, note)
 	}
 
-	return results, nil
+	return results, skippedPaths
 }
 
 func (f *FileNoteRepository) readNoteFile(filePath string) (model.ParsedNote, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		return model.ParsedNote{}, fmt.Errorf("failed to read file %s: %w", filePath, err)
+		return model.ParsedNote{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	parsedNote, err := f.noteService.ParseNote(content, filePath)
 	if err != nil {
-		return model.ParsedNote{}, fmt.Errorf("failed to parse note at %s: %w", filePath, err)
+		return model.ParsedNote{}, fmt.Errorf("failed to parse note: %w", err)
 	}
 
 	return parsedNote, nil
 }
+

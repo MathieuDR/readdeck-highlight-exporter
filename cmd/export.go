@@ -96,5 +96,5 @@ func getRepository() repository.NoteRepository {
 	noteService := repository.NewCustomNoteService(parser, generator, updater)
 	fleetingPath := viper.GetString("export.fleeting_path")
 	fmt.Printf("Saving to: %s\n", fleetingPath)
-	return repository.NewFileNoteRepository(fleetingPath, noteService)
+	return repository.NewFileNoteRepository(fleetingPath, noteService, verbose)
 }

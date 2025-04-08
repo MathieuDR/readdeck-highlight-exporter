@@ -111,7 +111,7 @@ func TestGenerateFirstThreeNotes(t *testing.T) {
 	updater := repository.NewYAMLNoteUpdater(generator, parser)
 	noteService := repository.NewCustomNoteService(parser, generator, updater)
 	fleetingNotes := path.Join(projectRoot, "test_artifacts")
-	noteRepo := repository.NewFileNoteRepository(fleetingNotes, noteService)
+	noteRepo := repository.NewFileNoteRepository(fleetingNotes, noteService, true)
 
 	// Manually get bookmark details and construct notes
 	notes := make([]model.Note, 0, len(processedBookmarks))

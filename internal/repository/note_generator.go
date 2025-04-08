@@ -1,3 +1,4 @@
+// internal/repository/note_generator.go
 package repository
 
 import (
@@ -86,16 +87,20 @@ func (g *YAMLNoteGenerator) generateMetadata(bookmark readdeck.Bookmark, highlig
 		return model.NoteMetadata{}, fmt.Errorf("could not hash highlights: %w", err)
 	}
 
+	// Convert time.Time to the expected format for our SimpleTime
+	created := model.SimpleTime{Time: bookmark.Created}
+	published := model.SimpleTime{Time: bookmark.Published}
+
 	return model.NoteMetadata{
 		ID:           util.GenerateId(bookmark.Title, time.Now()),
 		Aliases:      []string{fmt.Sprintf("%s highlights", util.Capitalize(bookmark.Title))},
 		Tags:         bookmark.Labels,
-		Created:      bookmark.Created,
+		Created:      created,
 		ReaddeckID:   bookmark.ID,
 		ReaddeckHash: hash,
 		Media:        bookmark.Title,
 		Type:         bookmark.Type,
-		Published:    bookmark.Published,
+		Published:    published,
 		ArchiveUrl:   bookmark.Href,
 		Site:         bookmark.SiteUrl,
 		Authors:      bookmark.Authors,
@@ -110,3 +115,4 @@ func (g *YAMLNoteGenerator) generateFrontmatter(metadata model.NoteMetadata) ([]
 
 	return []byte(fmt.Sprintf("---\n%s---\n", yamlData)), nil
 }
+

@@ -15,6 +15,9 @@ import (
 func TestYAMLFrontmatterParser_ParseNote(t *testing.T) {
 	testTime, _ := time.Parse(time.RFC3339, "2025-03-26T14:00:00Z")
 	publishTime, _ := time.Parse(time.RFC3339, "2020-03-26T14:00:00Z")
+
+	simpleTestTime := model.SimpleTime{Time: testTime}
+	simplePublishTime := model.SimpleTime{Time: publishTime}
 	hash, err := util.NewGobHasher().Encode([]string{"h1", "h2"})
 
 	require.NoError(t, err, "Could not hash for tests")
@@ -30,7 +33,7 @@ func TestYAMLFrontmatterParser_ParseNote(t *testing.T) {
 			name: "basic valid note",
 			content: []byte(`---
 id: note123
-created: 2025-03-26T14:00:00Z
+created: 2025-03-26 14:00
 readdeck-id: rd456
 tags:
   - go
@@ -43,7 +46,7 @@ Multiple paragraphs are supported.`),
 			want: model.ParsedNote{
 				Metadata: model.NoteMetadata{
 					ID:         "note123",
-					Created:    testTime,
+					Created:    simpleTestTime,
 					ReaddeckID: "rd456",
 					Tags:       []string{"go", "programming"},
 				},
@@ -58,7 +61,7 @@ Multiple paragraphs are supported.`),
 				Path: "/path/to/note.md",
 				RawFrontmatter: map[string]interface{}{
 					"id":          "note123",
-					"created":     "2025-03-26T14:00:00Z",
+					"created":     "2025-03-26 14:00",
 					"readdeck-id": "rd456",
 					"tags":        []interface{}{"go", "programming"},
 				},
@@ -75,12 +78,12 @@ aliases:
 tags:
   - research
   - papers
-created: 2025-03-26T14:00:00Z
+created: 2025-03-26 14:00
 readdeck-id: rd789
 media: "Rework"
 media-type: article
 readdeck-hash: %s
-media-published: 2020-03-26T14:00:00Z
+media-published: 2020-03-26 14:00
 readdeck-url: https://read.deck.com
 authors:
   - Jason
@@ -94,8 +97,8 @@ Full content here.`, hash)),
 					ID:           "full-note",
 					Aliases:      []string{"alias1", "alias2"},
 					Tags:         []string{"research", "papers"},
-					Created:      testTime,
-					Published:    publishTime,
+					Created:      simpleTestTime,
+					Published:    simplePublishTime,
 					Media:        "Rework",
 					Type:         "article",
 					ArchiveUrl:   "https://read.deck.com",
@@ -117,12 +120,12 @@ Full content here.`, hash)),
 					"id":              "full-note",
 					"aliases":         []interface{}{"alias1", "alias2"},
 					"tags":            []interface{}{"research", "papers"},
-					"created":         "2025-03-26T14:00:00Z",
+					"created":         "2025-03-26 14:00",
 					"readdeck-id":     "rd789",
 					"media":           "Rework",
 					"media-type":      "article",
 					"readdeck-hash":   hash,
-					"media-published": "2020-03-26T14:00:00Z",
+					"media-published": "2020-03-26 14:00",
 					"readdeck-url":    "https://read.deck.com",
 					"authors":         []interface{}{"Jason", "Bourne"},
 					"media-url":       "https://bourne.identity",
@@ -158,7 +161,7 @@ Multiple paragraphs are supported.`),
 		{
 			name: "missing frontmatter delimiters",
 			content: []byte(`id: note123
-created: 2025-03-26T14:00:00Z
+created: 2025-03-26 14:00
 This is not proper frontmatter.`),
 			path:    "/path/to/bad.md",
 			wantErr: true,
@@ -187,7 +190,7 @@ Content with missing required fields.`),
 			name: "section without header",
 			content: []byte(`---
 id: note123
-created: 2025-03-26T14:00:00Z
+created: 2025-03-26 14:00
 ---
 
 abc
@@ -196,7 +199,7 @@ abc
 			want: model.ParsedNote{
 				Metadata: model.NoteMetadata{
 					ID:      "note123",
-					Created: testTime,
+					Created: simpleTestTime,
 				},
 				HighlightIDs: []string{},
 				Content: []model.Section{{
@@ -207,7 +210,7 @@ abc
 				Path: "/path/to/no-header-content.md",
 				RawFrontmatter: map[string]interface{}{
 					"id":      "note123",
-					"created": "2025-03-26T14:00:00Z",
+					"created": "2025-03-26 14:00",
 				},
 			},
 			wantErr: false,
@@ -216,21 +219,21 @@ abc
 			name: "empty document after frontmatter",
 			content: []byte(`---
 id: note123
-created: 2025-03-26T14:00:00Z
+created: 2025-03-26 14:00
 ---
 `),
 			path: "/path/to/empty-content.md",
 			want: model.ParsedNote{
 				Metadata: model.NoteMetadata{
 					ID:      "note123",
-					Created: testTime,
+					Created: simpleTestTime,
 				},
 				HighlightIDs: []string{},
 				Content:      []model.Section{},
 				Path:         "/path/to/empty-content.md",
 				RawFrontmatter: map[string]interface{}{
 					"id":      "note123",
-					"created": "2025-03-26T14:00:00Z",
+					"created": "2025-03-26 14:00",
 				},
 			},
 			wantErr: false,
@@ -239,7 +242,7 @@ created: 2025-03-26T14:00:00Z
 			name: "codeblock are not headers",
 			content: []byte(`---
 id: headers-note
-created: 2025-03-26T14:00:00Z
+created: 2025-03-26 14:00
 ---
 # Main title
 Some intro text
@@ -265,7 +268,7 @@ Final notes
 			want: model.ParsedNote{
 				Metadata: model.NoteMetadata{
 					ID:      "headers-note",
-					Created: testTime,
+					Created: simpleTestTime,
 				},
 				HighlightIDs: []string{},
 				Content: []model.Section{
@@ -293,7 +296,7 @@ Final notes
 				Path: "/path/to/headers.md",
 				RawFrontmatter: map[string]interface{}{
 					"id":      "headers-note",
-					"created": "2025-03-26T14:00:00Z",
+					"created": "2025-03-26 14:00",
 				},
 			},
 			wantErr: false,
@@ -302,7 +305,7 @@ Final notes
 			name: "content with headers",
 			content: []byte(`---
 id: headers-note
-created: 2025-03-26T14:00:00Z
+created: 2025-03-26 14:00
 ---
 # Main title
 Some intro text
@@ -321,7 +324,7 @@ Final notes`),
 			want: model.ParsedNote{
 				Metadata: model.NoteMetadata{
 					ID:      "headers-note",
-					Created: testTime,
+					Created: simpleTestTime,
 				},
 				HighlightIDs: []string{},
 				Content: []model.Section{
@@ -349,7 +352,7 @@ Final notes`),
 				Path: "/path/to/headers.md",
 				RawFrontmatter: map[string]interface{}{
 					"id":      "headers-note",
-					"created": "2025-03-26T14:00:00Z",
+					"created": "2025-03-26 14:00",
 				},
 			},
 			wantErr: false,
@@ -358,7 +361,7 @@ Final notes`),
 			name: "headers without content",
 			content: []byte(`---
 id: empty-sections
-created: 2025-03-26T14:00:00Z
+created: 2025-03-26 14:00
 ---
 # Title
 
@@ -369,7 +372,7 @@ created: 2025-03-26T14:00:00Z
 			want: model.ParsedNote{
 				Metadata: model.NoteMetadata{
 					ID:      "empty-sections",
-					Created: testTime,
+					Created: simpleTestTime,
 				},
 				HighlightIDs: []string{},
 				Content: []model.Section{
@@ -392,7 +395,7 @@ created: 2025-03-26T14:00:00Z
 				Path: "/path/to/empty-sections.md",
 				RawFrontmatter: map[string]interface{}{
 					"id":      "empty-sections",
-					"created": "2025-03-26T14:00:00Z",
+					"created": "2025-03-26 14:00",
 				},
 			},
 			wantErr: false,

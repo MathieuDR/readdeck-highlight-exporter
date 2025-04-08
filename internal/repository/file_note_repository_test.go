@@ -83,7 +83,7 @@ func TestFileNoteRepository_findNotesInDirectory(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			path := path.Join(tt.basePath, tt.fleetingDir)
-			f := NewFileNoteRepository(path, mockParser)
+			f := NewFileNoteRepository(path, mockParser, false)
 			got, err := f.findNotesInDirectory(tt.dirPath)
 
 			if tt.wantErr {
@@ -186,7 +186,7 @@ func TestFileNoteRepository_createLookup(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			f := NewFileNoteRepository("", nil)
+			f := NewFileNoteRepository("", nil, false)
 			got := f.createLookup(tt.parsedNotes)
 			assert.Equal(t, tt.want, got)
 		})
