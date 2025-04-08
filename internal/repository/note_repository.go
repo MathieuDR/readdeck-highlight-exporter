@@ -7,7 +7,7 @@ import (
 )
 
 type NoteRepository interface {
-	UpsertAll(ctx context.Context, notes []model.Note) ([]model.Note, error)
+	UpsertAll(ctx context.Context, notes []model.Note) ([]OperationResult, error)
 }
 
 var _ NoteRepository = (*FileNoteRepository)(nil)

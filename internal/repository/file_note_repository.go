@@ -11,6 +11,12 @@ import (
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
 )
 
+type OperationResult struct {
+	Type            string // "created", "updated", "unchanged"
+	Note            model.Note
+	HighlightsAdded int
+}
+
 type FileNoteRepository struct {
 	fleetingPath string
 	noteService  NoteService
@@ -23,9 +29,8 @@ func NewFileNoteRepository(fleetingPath string, noteService NoteService) *FileNo
 	}
 }
 
-func (f *FileNoteRepository) UpsertAll(ctx context.Context, notes []model.Note) ([]model.Note, error) {
+func (f *FileNoteRepository) UpsertAll(ctx context.Context, notes []model.Note) ([]OperationResult, error) {
 	notePaths, err := f.findNotesInDirectory(f.fleetingPath)
-
 	if err != nil {
 		return nil, fmt.Errorf("could not find note paths: %w", err)
 	}
@@ -36,59 +41,82 @@ func (f *FileNoteRepository) UpsertAll(ctx context.Context, notes []model.Note) 
 	}
 
 	lookup := f.createLookup(parsedNotes)
-	result := make([]model.Note, len(notes))
+	results := make([]OperationResult, len(notes))
 
 	for i, toWriteNote := range notes {
-		var err error
-
-		result[i], err = f.processNote(toWriteNote, lookup)
-
+		result, err := f.processNote(toWriteNote, lookup)
 		if err != nil {
 			return nil, err
 		}
+		results[i] = result
 	}
 
-	return result, nil
+	return results, nil
 }
 
-func (f *FileNoteRepository) processNote(note model.Note, lookup map[string]model.ParsedNote) (model.Note, error) {
+func (f *FileNoteRepository) processNote(note model.Note, lookup map[string]model.ParsedNote) (OperationResult, error) {
 	bookmarkID := note.Bookmark.ID
 	existingNote, exists := lookup[bookmarkID]
 
 	if exists {
-		updatedNote, err := f.updateNote(existingNote, note)
+		updatedNote, highlightsAdded, err := f.updateNote(existingNote, note)
 		if err != nil {
-			return model.Note{}, fmt.Errorf("could not update note %s (%s): %w",
+			return OperationResult{}, fmt.Errorf("could not update note %s (%s): %w",
 				bookmarkID, existingNote.Path, err)
 		}
-		return updatedNote, nil
+
+		opType := "updated"
+		if highlightsAdded == 0 {
+			opType = "unchanged"
+		}
+
+		return OperationResult{
+			Type:            opType,
+			Note:            updatedNote,
+			HighlightsAdded: highlightsAdded,
+		}, nil
 	}
 
 	newNote, err := f.createNote(note)
 	if err != nil {
-		return model.Note{}, fmt.Errorf("could not create note %s: %w",
+		return OperationResult{}, fmt.Errorf("could not create note %s: %w",
 			bookmarkID, err)
 	}
-	return newNote, nil
+
+	return OperationResult{
+		Type:            "created",
+		Note:            newNote,
+		HighlightsAdded: len(note.Highlights),
+	}, nil
 }
 
-func (f *FileNoteRepository) updateNote(existingNote model.ParsedNote, note model.Note) (model.Note, error) {
-	op, err := f.noteService.UpdateNoteContent(existingNote, note)
-
-	if err != nil {
-		return model.Note{}, fmt.Errorf("could not generate bytes for update: %w", err)
+func (f *FileNoteRepository) updateNote(existingNote model.ParsedNote, note model.Note) (model.Note, int, error) {
+	newHighlightsCount := 0
+	existingIDs := make(map[string]bool)
+	for _, id := range existingNote.HighlightIDs {
+		existingIDs[id] = true
 	}
 
-	// TODO: Make immutable
+	for _, h := range note.Highlights {
+		if !existingIDs[h.ID] {
+			newHighlightsCount++
+		}
+	}
+
+	op, err := f.noteService.UpdateNoteContent(existingNote, note)
+	if err != nil {
+		return model.Note{}, 0, fmt.Errorf("could not generate bytes for update: %w", err)
+	}
+
 	result := note
 	result.Path = existingNote.Path
 
 	err = f.writeBytes(op.Content, existingNote.Path)
 	if err != nil {
-		return model.Note{}, err
+		return model.Note{}, 0, err
 	}
 
-	return result, nil
+	return result, newHighlightsCount, nil
 }
 
 func (f *FileNoteRepository) createNote(note model.Note) (model.Note, error) {
