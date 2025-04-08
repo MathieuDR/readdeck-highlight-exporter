@@ -40,7 +40,15 @@ func PrintSummary(results []repository.OperationResult, printTiming bool, durati
 	}
 
 	if printTiming {
-		fmt.Printf("Time: %.2fs\n", duration.Seconds())
+		if printTiming {
+			if duration.Seconds() < 10 {
+				// For durations less than 10 seconds, show in milliseconds
+				fmt.Printf("Time: %dms\n", duration.Milliseconds())
+			} else {
+				// For durations 10 seconds or longer, show in seconds with 2 decimal places
+				fmt.Printf("Time: %.2fs\n", duration.Seconds())
+			}
+		}
 	}
 }
 

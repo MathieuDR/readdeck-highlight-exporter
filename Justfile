@@ -5,6 +5,8 @@
 default:
     @just --list
 
+e *ARGS:
+  ./result/bin/highlight-exporter {{ARGS}}
     
 # Run tests (all or specific package)
 test *ARGS:
