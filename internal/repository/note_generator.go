@@ -69,6 +69,7 @@ func (g *YAMLNoteGenerator) GenerateNoteContent(note model.Note) (NoteOperation,
 	}
 
 	// Add metadata
+	content = append(content, []byte("## References\n")...)
 	content = append(content, g.generateReferences(metadata)...)
 
 	return NoteOperation{
@@ -121,8 +122,7 @@ func (g *YAMLNoteGenerator) generateFrontmatter(metadata model.NoteMetadata) ([]
 
 func (g *YAMLNoteGenerator) generateReferences(metadata model.NoteMetadata) []byte {
 	var result []byte
-	result = append(result, []byte("## References\n")...)
-	result = append(result, []byte(fmt.Sprintf("[%s](%s)\n", metadata.Aliases[0], metadata.Site))...)
+	result = append(result, []byte(fmt.Sprintf("[%s](%s)\n", metadata.Media, metadata.Site))...)
 	result = append(result, []byte(fmt.Sprintf("[Archived article](%s)\n", metadata.ArchiveUrl))...)
 
 	return result
