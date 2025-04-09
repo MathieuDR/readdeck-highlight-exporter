@@ -10,13 +10,6 @@
     };
   };
 
-  nixConfig = {
-    extra-substituters = [
-    ];
-    extra-trusted-public-keys = [
-    ];
-  };
-
   outputs = {
     self,
     systems,
