@@ -86,10 +86,13 @@ func (g *YAMLNoteGenerator) generateMetadata(bookmark readdeck.Bookmark, highlig
 	created := model.SimpleTime{Time: bookmark.Created}
 	published := model.SimpleTime{Time: bookmark.Published}
 
+	tags := make([]string, 0, 3+len(bookmark.Labels))
+	tags = append(tags, []string{"highlights", "zettelkasten", "fleeting-note"}...)
+
 	return model.NoteMetadata{
 		ID:           util.GenerateId(bookmark.Title, time.Now()),
 		Aliases:      []string{fmt.Sprintf("%s highlights", util.Capitalize(bookmark.Title))},
-		Tags:         bookmark.Labels,
+		Tags:         tags,
 		Created:      created,
 		ReaddeckID:   bookmark.ID,
 		ReaddeckHash: hash,
