@@ -119,6 +119,10 @@ func (f *FileNoteRepository) updateNote(existingNote model.ParsedNote, note mode
 		return model.Note{}, 0, fmt.Errorf("could not generate bytes for update: %w", err)
 	}
 
+	if len(op.Content) == 0 {
+		return note, 0, nil
+	}
+
 	result := note
 	result.Path = existingNote.Path
 

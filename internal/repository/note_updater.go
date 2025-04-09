@@ -3,7 +3,6 @@ package repository
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
@@ -24,6 +23,12 @@ func NewYAMLNoteUpdater(generator *YAMLNoteGenerator, parser *YAMLNoteParser) *Y
 }
 
 func (u *YAMLNoteUpdater) UpdateNoteContent(existing model.ParsedNote, note model.Note) (NoteOperation, error) {
+	highlights := u.getHighlights(existing.HighlightIDs, note.Highlights)
+
+	if len(highlights) == 0 {
+		return NoteOperation{}, nil
+	}
+
 	metadata, err := u.updateMetadata(existing.Metadata, note.Bookmark, note.Highlights)
 	if err != nil {
 		return NoteOperation{}, err
@@ -37,7 +42,6 @@ func (u *YAMLNoteUpdater) UpdateNoteContent(existing model.ParsedNote, note mode
 	}
 	content = append(content, frontmatter...)
 
-	highlights := u.getHighlights(existing.HighlightIDs, note.Highlights)
 	bodyBytes := u.appendHighlightsToSections(existing.Content, highlights, metadata)
 	content = append(content, bodyBytes...)
 
@@ -107,30 +111,12 @@ func (u *YAMLNoteUpdater) findReferenceSection(sections []model.Section) *model.
 func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, highlights []readdeck.Highlight, metadata model.NoteMetadata) []byte {
 	var buffer bytes.Buffer
 	referenceSection := u.findReferenceSection(sections)
-	generatedRefs := false
 	if referenceSection == nil {
-		log.Printf("Generationg references\n")
-		generatedRefs = true
 		referenceSection = &model.Section{
-			Type:  model.H2,
-			Title: "References",
-			// Content: "MYREFS\n",
+			Type:    model.H2,
+			Title:   "References",
 			Content: string(u.Generator.generateReferences(metadata)),
 		}
-	}
-
-	if len(highlights) == 0 {
-		for _, section := range sections {
-			writeSection(&buffer, section)
-		}
-
-		if generatedRefs {
-			if buffer.Len() > 0 {
-				buffer.WriteString("\n\n")
-			}
-			writeSection(&buffer, *referenceSection)
-		}
-		return buffer.Bytes()
 	}
 
 	// Reuse the formatter's grouping and ordering logic to ensure consistent
