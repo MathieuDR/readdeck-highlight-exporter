@@ -93,8 +93,19 @@ func (u *YAMLNoteUpdater) updateFrontmatter(existing map[string]interface{}, met
 	return []byte(fmt.Sprintf("---\n%s---\n", frontmatterBytes)), nil
 }
 
+func (u *YAMLNoteUpdater) findReferenceSection(sections []model.Section) *model.Section {
+	for i, section := range sections {
+		if section.Type == model.H2 && section.Title == "References" {
+			return &sections[i]
+		}
+	}
+
+	return nil
+}
+
 func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, highlights []readdeck.Highlight) []byte {
 	var buffer bytes.Buffer
+	referenceSection := u.findReferenceSection(sections)
 
 	if len(highlights) == 0 {
 		for _, section := range sections {
@@ -117,7 +128,9 @@ func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, h
 	processedColors := make(map[string]bool)
 
 	for _, section := range sections {
-		writeSection(&buffer, section)
+		if &section != referenceSection {
+			writeSection(&buffer, section)
+		}
 
 		if section.Type == model.H2 {
 			for color := range highlightGroups {
@@ -145,6 +158,13 @@ func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, h
 			buffer.Write(title)
 			buffer.Write(highlightBodies[color])
 		}
+	}
+
+	if referenceSection != nil {
+		if buffer.Len() > 0 {
+			buffer.WriteString("\n\n")
+		}
+		writeSection(&buffer, *referenceSection)
 	}
 
 	return buffer.Bytes()
