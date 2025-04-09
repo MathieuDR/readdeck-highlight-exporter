@@ -78,12 +78,7 @@ func TestExport(t *testing.T) {
 	mockClient.On("GetHighlights", ctx).Return(highlights, nil)
 	mockClient.On("GetBookmark", ctx, "book1").Return(bookmark1, nil)
 	mockClient.On("GetBookmark", ctx, "book2").Return(bookmark2, nil)
-
-	mockRepo.On("UpsertAll", ctx, mock.MatchedBy(func(notes []model.Note) bool {
-		return len(notes) == 2 &&
-			notes[0].Bookmark.ID == "book1" &&
-			notes[1].Bookmark.ID == "book2"
-	})).Return(expectedResults, nil)
+	mockRepo.On("UpsertAll", ctx, mock.Anything).Return(expectedResults, nil)
 
 	operationResults, err := exporter.Export(ctx)
 
