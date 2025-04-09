@@ -28,12 +28,14 @@ type NoteUpdater interface {
 type YAMLNoteGenerator struct {
 	Hasher             *util.GobHasher
 	HighlightFormatter *HighlightFormatter
+	BaseUrl            string
 }
 
-func NewYAMLNoteGenerator(formatter *HighlightFormatter) *YAMLNoteGenerator {
+func NewYAMLNoteGenerator(formatter *HighlightFormatter, baseUrl string) *YAMLNoteGenerator {
 	return &YAMLNoteGenerator{
 		Hasher:             util.NewGobHasher(),
 		HighlightFormatter: formatter,
+		BaseUrl:            baseUrl,
 	}
 }
 
@@ -65,6 +67,9 @@ func (g *YAMLNoteGenerator) GenerateNoteContent(note model.Note) (NoteOperation,
 			content = append(content, section...)
 		}
 	}
+
+	// Add metadata
+	content = append(content, g.generateReferences(metadata)...)
 
 	return NoteOperation{
 		Metadata: metadata,
@@ -99,7 +104,7 @@ func (g *YAMLNoteGenerator) generateMetadata(bookmark readdeck.Bookmark, highlig
 		Media:        bookmark.Title,
 		Type:         bookmark.Type,
 		Published:    published,
-		ArchiveUrl:   bookmark.Href,
+		ArchiveUrl:   fmt.Sprint("%s/bookmarks/%s", g.BaseUrl, bookmark.ID),
 		Site:         bookmark.SiteUrl,
 		Authors:      bookmark.Authors,
 	}, nil
@@ -112,4 +117,13 @@ func (g *YAMLNoteGenerator) generateFrontmatter(metadata model.NoteMetadata) ([]
 	}
 
 	return []byte(fmt.Sprintf("---\n%s---\n", yamlData)), nil
+}
+
+func (g *YAMLNoteGenerator) generateReferences(metadata model.NoteMetadata) []byte {
+	var result []byte
+	result = append(result, []byte("# References\n")...)
+	result = append(result, []byte(fmt.Sprintf("[%s](%s)\n", metadata.Aliases[0], metadata.Site))...)
+	result = append(result, []byte(fmt.Sprintf("[Archived article](%s)\n", metadata.ArchiveUrl))...)
+
+	return result
 }
