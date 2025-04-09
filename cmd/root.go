@@ -9,20 +9,36 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var (
+	cfgFile     string
+	showVersion bool
+
+	programName = "highlight-exporter"
+	version     = "dev"
+	buildTime   = "unknown/go"
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "readdeck-highlight-exporter",
+	Use:   programName,
 	Short: "Export Readdeck highlights to Zettelkasten notes",
-	Long: `Readdeck Highlight Exporter is a CLI tool that exports highlights 
+	Long: fmt.Sprintf(`Readdeck Highlight Exporter is a CLI tool that exports highlights 
 from Readdeck (a read-it-later service) to your Zettelkasten note-taking system.
 
 The tool reads from Readdeck without modifying it and tracks exported 
 highlights through the generated notes themselves, ensuring idempotent operation.
 
 To get started, run the 'config' command to set up your configuration:
-  readdeck-highlight-exporter config --help`,
+  %s config --help`, programName),
+	Run: func(cmd *cobra.Command, args []string) {
+		if showVersion {
+			printVersion()
+			return
+		}
+
+		// If no command is specified, print help
+		cmd.Help()
+	},
 }
 
 func Execute() {
@@ -37,6 +53,7 @@ func init() {
 
 	// Config file flag
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $XDG_CONFIG_HOME/readdeck-exporter/settings.yaml)")
+	rootCmd.Flags().BoolVarP(&showVersion, "version", "v", false, "Print version information and exit")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -66,4 +83,9 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
+}
+
+func printVersion() {
+	fmt.Printf("%s version %s\n", programName, version)
+	fmt.Printf("Built: %s\n", buildTime)
 }

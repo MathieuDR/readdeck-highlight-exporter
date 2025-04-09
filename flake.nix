@@ -44,10 +44,15 @@
           mv $out/bin/* $out/bin/${exe_name}
         '';
 
+        preBuild = ''
+          echo "Building version: ${version}"
+          echo "Using ldflags: -X main.ProgramName=${exe_name} -X main.Version=${version} -X main.BuildTime=nixbuild"
+        '';
+
         ldflags = [
-          "-X main.ProgramName=${exe_name}"
-          "-X main.Version=${version}"
-          "-X main.BuildTime=nixbuild"
+          "-X github.com/mathieudr/readdeck-highlight-exporter/cmd.programName=${exe_name}"
+          "-X github.com/mathieudr/readdeck-highlight-exporter/cmd.version=${version}"
+          "-X github.com/mathieudr/readdeck-highlight-exporter/cmd.buildTime=nixbuild"
         ];
 
         meta = {
