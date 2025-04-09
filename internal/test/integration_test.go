@@ -99,15 +99,12 @@ func TestGenerateFirstThreeNotes(t *testing.T) {
 	for id, hs := range bookmarkMap {
 		processedBookmarks[id] = hs
 		count++
-		// if count >= 3 {
-		// 	break
-		// }
 	}
 
 	// Setup repository with absolute path
 	formatter := repository.NewHighlightFormatter(repository.DefaultColorConfig())
 	parser := repository.NewYAMLNoteParser()
-	generator := repository.NewYAMLNoteGenerator(formatter)
+	generator := repository.NewYAMLNoteGenerator(formatter, baseURL)
 	updater := repository.NewYAMLNoteUpdater(generator, parser)
 	noteService := repository.NewCustomNoteService(parser, generator, updater)
 	fleetingNotes := path.Join(projectRoot, "test_artifacts")

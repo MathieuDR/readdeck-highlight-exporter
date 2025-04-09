@@ -84,12 +84,14 @@ func getClient() readdeck.Client {
 }
 
 func getRepository() repository.NoteRepository {
+	baseURL := viper.GetString("readdeck.base_url")
+	fleetingPath := viper.GetString("export.fleeting_path")
+
 	formatter := repository.NewHighlightFormatter(repository.DefaultColorConfig())
 	parser := repository.NewYAMLNoteParser()
-	generator := repository.NewYAMLNoteGenerator(formatter)
+	generator := repository.NewYAMLNoteGenerator(formatter, baseURL)
 	updater := repository.NewYAMLNoteUpdater(generator, parser)
 	noteService := repository.NewCustomNoteService(parser, generator, updater)
-	fleetingPath := viper.GetString("export.fleeting_path")
 	fmt.Printf("Saving to: %s\n", fleetingPath)
 	return repository.NewFileNoteRepository(fleetingPath, noteService, verbose)
 }

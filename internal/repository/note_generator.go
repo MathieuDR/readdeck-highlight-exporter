@@ -104,7 +104,7 @@ func (g *YAMLNoteGenerator) generateMetadata(bookmark readdeck.Bookmark, highlig
 		Media:        bookmark.Title,
 		Type:         bookmark.Type,
 		Published:    published,
-		ArchiveUrl:   fmt.Sprint("%s/bookmarks/%s", g.BaseUrl, bookmark.ID),
+		ArchiveUrl:   fmt.Sprintf("%s/bookmarks/%s", g.BaseUrl, bookmark.ID),
 		Site:         bookmark.SiteUrl,
 		Authors:      bookmark.Authors,
 	}, nil

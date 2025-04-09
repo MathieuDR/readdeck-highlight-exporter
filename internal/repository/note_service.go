@@ -17,10 +17,10 @@ type ComprehensiveNoteService struct {
 	Updater   NoteUpdater
 }
 
-func NewNoteService() NoteService {
+func NewNoteService(baseUrl string) NoteService {
 	formatter := NewHighlightFormatter(DefaultColorConfig())
 	parser := NewYAMLNoteParser()
-	generator := NewYAMLNoteGenerator(formatter)
+	generator := NewYAMLNoteGenerator(formatter, baseUrl)
 	updater := NewYAMLNoteUpdater(generator, parser)
 
 	return &ComprehensiveNoteService{
