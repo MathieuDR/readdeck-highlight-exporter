@@ -8,6 +8,7 @@ import (
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/model"
 	"github.com/mathieudr/readdeck-highlight-exporter/internal/readdeck"
 	"gopkg.in/yaml.v2"
+	"maps"
 )
 
 type YAMLNoteUpdater struct {
@@ -85,9 +86,7 @@ func (u *YAMLNoteUpdater) updateFrontmatter(existing map[string]interface{}, met
 	}
 
 	// Merge updated fields into original raw map
-	for k, v := range updatedMap {
-		existing[k] = v
-	}
+	maps.Copy(existing, updatedMap)
 
 	// Create frontmatter with ALL fields preserved
 	frontmatterBytes, err := yaml.Marshal(existing)
@@ -95,7 +94,7 @@ func (u *YAMLNoteUpdater) updateFrontmatter(existing map[string]interface{}, met
 		return nil, fmt.Errorf("could not marshal frontmatter: %w", err)
 	}
 
-	return []byte(fmt.Sprintf("---\n%s---\n", frontmatterBytes)), nil
+	return fmt.Appendf(nil, "---\n%s---\n", frontmatterBytes), nil
 }
 
 func (u *YAMLNoteUpdater) findReferenceSection(sections []model.Section) *model.Section {
@@ -132,16 +131,17 @@ func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, h
 	// need new sections at the end of the document
 	processedColors := make(map[string]bool)
 
-	for _, section := range sections {
-		if &section != referenceSection {
-			writeSection(&buffer, section)
+	for i := range sections {
+		// section := sections[i]
+		if &sections[i] != referenceSection {
+			writeSection(&buffer, sections[i])
 		}
 
-		if section.Type == model.H2 {
+		if sections[i].Type == model.H2 {
 			for color := range highlightGroups {
 				friendlyName := u.Generator.HighlightFormatter.colorToFriendlyName(color)
 
-				if friendlyName == section.Title && len(highlightGroups[color]) > 0 {
+				if friendlyName == sections[i].Title && len(highlightGroups[color]) > 0 {
 					// Use the highlight bodies directly instead of trying to extract them
 					buffer.Write(highlightBodies[color])
 					processedColors[color] = true
@@ -156,20 +156,13 @@ func (u *YAMLNoteUpdater) appendHighlightsToSections(sections []model.Section, h
 	// at the end of the document in the proper order
 	for _, color := range colorOrder {
 		if !processedColors[color] && len(highlightGroups[color]) > 0 {
-			if buffer.Len() > 0 {
-				buffer.WriteString("\n\n")
-			}
 			title := u.Generator.HighlightFormatter.highlightTitleBytes(color)
 			buffer.Write(title)
 			buffer.Write(highlightBodies[color])
 		}
 	}
 
-	if buffer.Len() > 0 {
-		buffer.WriteString("\n\n")
-	}
 	writeSection(&buffer, *referenceSection)
-
 	return buffer.Bytes()
 }
 
