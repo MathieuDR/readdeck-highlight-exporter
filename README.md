@@ -2,6 +2,8 @@
 
 A command-line tool that exports your highlights from Readdeck (a read-it-later service) to your Zettelkasten note system.
 
+Read [the article](https://mathieu.deraedt.dev/output/projects/1747124404-readdeck-highlight-exporter?utm_source=github&utm_medium=docs&utm_campaign=readdeck-exporter) that comes along with this project on my website.
+
 ## What It Does
 
 This tool helps you maintain a personal knowledge base by:
