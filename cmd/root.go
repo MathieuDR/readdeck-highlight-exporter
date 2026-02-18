@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -84,7 +85,10 @@ func initConfig() {
 	err := viper.ReadInConfig()
 
 	if err != nil {
-		log.Fatalf("Could not read the configuration: %v", err)
+		var notFound viper.ConfigFileNotFoundError
+		if !errors.As(err, &notFound) {
+			log.Fatalf("Could not read the configuration: %v", err)
+		}
 	}
 }
 

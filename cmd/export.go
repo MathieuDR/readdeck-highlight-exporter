@@ -39,6 +39,13 @@ Examples:
 		// Clear standard log prefix for cleaner output
 		log.SetFlags(0)
 
+		// Setting config
+		if viper.GetString("readdeck.base_url") == "" ||
+			viper.GetString("readdeck.token") == "" ||
+			viper.GetString("export.fleeting_path") == "" {
+			log.Fatalf("Missing required configuration. Run 'highlight-exporter config --help' to get started.")
+		}
+
 		startTime := time.Now()
 
 		exporter := getExporter()
